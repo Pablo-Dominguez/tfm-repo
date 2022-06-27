@@ -1,0 +1,25 @@
+---
+title: "Análisis y modelado de datos"
+author: "Pablo Domínguez"
+date: '2022-06-23'
+output: html_document
+---
+
+```{r message=FALSE}
+library(tidyverse)
+```
+
+
+
+```{r}
+db <- read.csv("../db/weatherAUS.csv")
+db %>% head() 
+
+# Voy a descomponer en:
+# - trend
+# - seasonality
+# - noise
+# 
+# SMA(n):moving average of last n days --> smoothing
+```
+
