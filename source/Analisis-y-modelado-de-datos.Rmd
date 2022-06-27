@@ -1,0 +1,69 @@
+---
+title: "Análisis y modelado de datos"
+author: "Pablo Domínguez"
+date: '2022-06-23'
+output: pdf_document
+bibliography: references.bib  
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+---
+
+```{r message=FALSE}
+library(tidyverse)
+library(kableExtra)
+```
+
+## Planteamiento del problema a abordar
+
+Nos encontramos con un conjunto de datos obtenidos a partir de mediciones meteorológicas realizadas por el gobierno de Australia^[Notes about Daily Weather Observations - @NADWO]. Estos datos, recogidos en distintas localidades, se han capturado realizando mediciones diarias de temperatura, lluvia, evaporación, sol, viento, humedad etc. 
+
+En la referencia mencionada advierten que el control de calidad aplicado a la captura de estos datos ha sido limitado, por lo que es posible que existan imprecisiones debidas a datos faltantes, valores acumulados tras varios datos faltantes o errores de varios tipos. Es por este motivo que empezaremos nuestro estudio realizando una revisión de la calidad y estructura del dato. Tras este proceso, construiremos una serie de variables que transformarán el problema y la estructura de datos para que puedan aplicarse los modelos de clasificación supervisada planteados.
+
+Partiendo de la base de datos procesada, la segmentaremos para aplicar varios modelados diferentes por zonas (siguiendo cierto criterio). Finalmente, compararemos los modelos, los ensamblaremos y presentaremos unos resultados de la precisión del modelo final.
+
+Con esta aplicación práctica de los modelos teóricos abordados en el capítulo anterior buscamos reflejar la capacidad de herramientas matemáticas abstractas a la hora de resolver situaciones que pueden tener un gran beneficio en varios ámbitos, tales como sociales, económicos o medioambientales.
+
+## Origen de los datos y variable objetivo
+
+El buró de metereología australiano coordina una serie de estaciones metereológicas repartidas a lo largo del territorio. De esta manera, recopila y reporta datos sobre mediciones meteorológicas. En nuestro caso, 
+
+```{r}
+db <- read.csv("../db/weatherAUS.csv", stringsAsFactors = TRUE)
+db$Date <- as.Date(db$Date, format="%Y-%m-%d")
+attach(db)
+db %>% head() %>% kbl()
+
+# Voy a descomponer en:
+# - trend
+# - seasonality
+# - noise
+# 
+# SMA(n):moving average of last n days --> smoothing
+# decompose()
+```
+
+```{r Tipos de datos}
+str(db)
+```
+
+```{r Rangos de fechas}
+
+for(city in levels(db$Location)){
+  
+}
+
+```
+
