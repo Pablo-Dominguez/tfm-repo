@@ -21,7 +21,7 @@ header-includes:
 - \usepackage{xcolor}
 ---
 
-```{r message=FALSE}
+```{r message=FALSE, echo=FALSE}
 library(tidyverse)
 library(kableExtra)
 ```
@@ -38,13 +38,17 @@ Con esta aplicación práctica de los modelos teóricos abordados en el capítul
 
 ## Origen de los datos y variable objetivo
 
-El buró de metereología australiano coordina una serie de estaciones metereológicas repartidas a lo largo del territorio. De esta manera, recopila y reporta datos sobre mediciones meteorológicas. En nuestro caso, 
+El buró de metereología australiano coordina una serie de estaciones metereológicas locales repartidas a lo largo del territorio. De esta manera, recopila y reporta datos sobre mediciones meteorológicas. En nuestro caso, tenemos información de **(numero)** ciudades repartidos a lo largo de **cantidad** años.
 
-```{r}
+```{r echo=FALSE}
+
+x <- "rep(\"---\", 6)"
+xnew <- "---"
+
 db <- read.csv("../db/weatherAUS.csv", stringsAsFactors = TRUE)
 db$Date <- as.Date(db$Date, format="%Y-%m-%d")
 attach(db)
-db %>% head() %>% kbl()
+db %>% head() %>%  select(-c(6:19)) %>% add_column(.,rep("---",6),.after = 5) %>% rename(., !!xnew := !!rlang::sym(x)) %>% kbl(., booktabs = T,caption = "Muestra de los datos[note]",) %>% kable_styling(latex_options = c("striped", "scale_down")) 
 
 # Voy a descomponer en:
 # - trend
@@ -56,13 +60,71 @@ db %>% head() %>% kbl()
 ```
 
 ```{r Tipos de datos}
+# Buscar manera alternativa (representable) de evaluar los tipos de dato.
 str(db)
 ```
 
-```{r Rangos de fechas}
+
+## Información de los datos
+
+```{r Rangos de fechas, echo=FALSE}
+
+min_fec <- c()
+max_fec <- c()
+obs <- c()
+rep <- c()
+n_diff_dates_vec <- c()
+top_diff_date_vec <- c()
+range_free_vec <- c()
 
 for(city in levels(db$Location)){
+  # Filtramos el ds por ciudad
+  db_filtered <- db %>% filter(.,Location==city)
   
+  # Calculamos el minimo y el máximo de la variable Date
+  mind <- format(as.Date(min(db_filtered$Date),format="%Y-%m-%d"))
+  min_fec <- c(min_fec,mind)
+  maxd <- format(as.Date(max(db_filtered$Date),format="%Y-%m-%d"))
+  max_fec <- c(max_fec,maxd)
+  
+  # Comprobamos rangos de fecha
+  fech_range <- seq(mind %>% as.Date(), maxd %>% as.Date(), "days")
+  diff_dates <- setdiff(fech_range,db_filtered$Date) %>% as.Date(., origin="1970-01-01")
+  if(length(diff_dates)>0){
+    top_diff_date <- max(diff_dates) %>% as.Date(., origin="1970-01-01")
+    top_diff_date_vec <- c(top_diff_date_vec,top_diff_date)
+    n_diff_dates <- length(diff_dates)
+    n_diff_dates_vec <- c(n_diff_dates_vec,n_diff_dates)
+    range_free <- seq(top_diff_date %>% as.Date(),maxd %>% as.Date(), "days") %>% length()
+    range_free_vec <- c(range_free_vec,range_free)
+  } else {
+    top_diff_date_vec <- c(top_diff_date_vec,NA)
+    n_diff_dates_vec <- c(n_diff_dates_vec,0)
+    range_free_vec <- c(range_free_vec,NA)
+  }
+  obs <- c(obs,length(db_filtered$Date))
+  rep <- c(rep,length(unique(db_filtered$Date))==length(db_filtered$Date))
+}
+
+dates_df <- data.frame(min_fec,max_fec,obs,rep,n_diff_dates_vec,top_diff_date_vec,range_free_vec)
+dates_df$min_fec <- as.Date(dates_df$min_fec, format="%Y-%m-%d")
+dates_df$max_fec <- as.Date(dates_df$max_fec, format="%Y-%m-%d")
+dates_df <- mutate(dates_df, range = max_fec - min_fec)
+dates_df$años <- (dates_df$range / 365) %>% as.integer()
+dates_df$dias <- as.integer(dates_df$range)-365*(dates_df$años)
+dates_df$top_diff_date_vec <- dates_df$top_diff_date_vec %>% as.Date(., origin="1970-01-01")
+
+rownames(dates_df) <- levels(db$Location)
+
+```
+
+
+```{r Evaluamos rangos de fechas}
+
+
+
+for(city in levels(db$Location)){
+  db_filtered <- db %>% filter(.,Location==city)
 }
 
 ```
