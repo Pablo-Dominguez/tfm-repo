@@ -116,16 +116,129 @@ dates_df$top_diff_date_vec <- dates_df$top_diff_date_vec %>% as.Date(., origin="
 
 rownames(dates_df) <- levels(db$Location)
 
+dates_df %>% View()
+
 ```
 
+*renombrar columnas
+Hablamos sobre la brecha de fechas, sobre los datos faltantes y el "salto" cuando ya no hay datos faltantes: 2013-03-01. Filtramos por el último valor a partir del cual no hay datos faltantes, esto es, 2013-12-31
 
-```{r Evaluamos rangos de fechas}
+```{r Filtramos por fecha mayor a 2013-12-31 y menor a 2017-06-24}
 
+# Rango de a 2013-12-31 y menor a 2017-06-24
+db <- db %>% filter(.,Date>=as.Date("2013-12-31") & Date<=as.Date("2017-06-24"))
 
+# Comprobamos datos limpios
+min_fec <- c()
+max_fec <- c()
+obs <- c()
+rep <- c()
+n_diff_dates_vec <- c()
+top_diff_date_vec <- c()
+range_free_vec <- c()
 
 for(city in levels(db$Location)){
+  # Filtramos el ds por ciudad
   db_filtered <- db %>% filter(.,Location==city)
+  
+  # Calculamos el minimo y el máximo de la variable Date
+  mind <- format(as.Date(min(db_filtered$Date),format="%Y-%m-%d"))
+  min_fec <- c(min_fec,mind)
+  maxd <- format(as.Date(max(db_filtered$Date),format="%Y-%m-%d"))
+  max_fec <- c(max_fec,maxd)
+  
+  # Comprobamos rangos de fecha
+  fech_range <- seq(mind %>% as.Date(), maxd %>% as.Date(), "days")
+  diff_dates <- setdiff(fech_range,db_filtered$Date) %>% as.Date(., origin="1970-01-01")
+  if(length(diff_dates)>0){
+    top_diff_date <- max(diff_dates) %>% as.Date(., origin="1970-01-01")
+    top_diff_date_vec <- c(top_diff_date_vec,top_diff_date)
+    n_diff_dates <- length(diff_dates)
+    n_diff_dates_vec <- c(n_diff_dates_vec,n_diff_dates)
+    range_free <- seq(top_diff_date %>% as.Date(),maxd %>% as.Date(), "days") %>% length()
+    range_free_vec <- c(range_free_vec,range_free)
+  } else {
+    top_diff_date_vec <- c(top_diff_date_vec,NA)
+    n_diff_dates_vec <- c(n_diff_dates_vec,0)
+    range_free_vec <- c(range_free_vec,NA)
+  }
+  obs <- c(obs,length(db_filtered$Date))
+  rep <- c(rep,length(unique(db_filtered$Date))==length(db_filtered$Date))
 }
+
+dates_df <- data.frame(min_fec,max_fec,obs,rep,n_diff_dates_vec,top_diff_date_vec,range_free_vec)
+dates_df$min_fec <- as.Date(dates_df$min_fec, format="%Y-%m-%d")
+dates_df$max_fec <- as.Date(dates_df$max_fec, format="%Y-%m-%d")
+dates_df <- mutate(dates_df, range = max_fec - min_fec)
+dates_df$años <- (dates_df$range / 365) %>% as.integer()
+dates_df$dias <- as.integer(dates_df$range)-365*(dates_df$años)
+dates_df$top_diff_date_vec <- dates_df$top_diff_date_vec %>% as.Date(., origin="1970-01-01")
+
+rownames(dates_df) <- levels(db$Location)
+
+dates_df %>% View()
+
+```
+
+Hablar de cómo hemos asignado las zonas climáticas. Puto google maps y el mapa ese del aus gov
+
+
+```{r Agrupamos por zonas climáticas}
+
+zona1 <- c("Exmouth", "Dampier", "PortHedland", "Broome", "Derby", "Wyndham", "TimberCreek", "Katherine","Darwin", "Oenpelli", "Borroloola", "Nhulunbuy","Burketown", "Weipa", "Cooktown", "Cairns", "Townsville")
+zona2 <- c("Mackay", "Rockhampton", "Maryborough", "Brisbane", "CoffsHarbour","GoldCoast")
+zona3 <- c("Goondiwindi", "Taroom","Charleville", "Longreach","Thargomindah","Birdsville","MountIsa","AliceSprings","Kulgera","Yulara","Telfer","Newman", "GascoyneJunction","Carnavon","Uluru")
+zona4 <- c("Woomera","Yalgoo", "Wiluna", "KalgoorlieBoulder", "Norseman", "Merredin","Newdegate","Warburton", "Amata","Oodnadatta","CooberPedy", "Nullarbor", "Innamincka","Whyalla","BrokenHill","Tibooburra","Bourke","Ivanhoe","Mildura","Griffith","Albury","WaggaWagga","Wodonga","Dubbo","Tamworth","Shepparton","Cobar","Moree","Nhil")
+zona5 <- c("Geraldton","Perth","Witchcliffe","Bunbury","MargaretRiver","Esperance","Eucla","Ceduna","PortLincoln","Adelaide","LeighCreek","Renmark","Wollongong","Sydney","SydneyAirport","Newcastle","PortMacquaire","NorahHead","PearceRAAF","Penrith","PerthAirport")
+zona6 <- c("Albany","Burra","Kingscote","KingstonSE","MountGambier","Horsham","Watsonia","Melbourne","LakesEntrance","BadgerysCreek","Bendigo","Dartmoor","MelbourneAirport","Nuriootpa","Sale","SalmonGums")
+zona7 <- c("Ballarat","Canberra","Bathurst","Devonport","Strahan","Launceston","Swansea","Hobart","Southport","Tuggeranong")
+zona8 <- c("MountGinini")
+
+zonas <- c(zona1,zona2,zona3,zona4,zona5,zona6,zona7,zona8)
+zona_climatica <- c()
+
+for(city in levels(db$Location)){
+  if(city %in% zona1){
+    zona_climatica <- c(zona_climatica,1)
+  }
+  else if(city %in% zona2){
+    zona_climatica <- c(zona_climatica,2)
+  }
+  else if(city %in% zona3){
+    zona_climatica <- c(zona_climatica,3)
+  }
+  else if(city %in% zona4){
+    zona_climatica <- c(zona_climatica,4)
+  }
+  else if(city %in% zona5){
+    zona_climatica <- c(zona_climatica,5)
+  }
+  else if(city %in% zona6){
+    zona_climatica <- c(zona_climatica,6)
+  }
+  else if(city %in% zona7){
+    zona_climatica <- c(zona_climatica,7)
+  } else {
+    zona_climatica <- c(zona_climatica,0)
+  }
+}
+
+zonas_climaticas <- data.frame(levels(db$Location),zona_climatica) %>% rename(Location=levels.db.Location.)
+zonas_climaticas %>% View()
+
+```
+
+Hemos eliminado localizaciones las cuales no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado: (lista ciudades). Mostramos observaciones por zona climática.
+
+```{r Conteo de observaciones por zona climática}
+
+# Añadimos las zonas climáticas
+
+db <- left_join(zonas_climaticas,db, by="Location")
+db %>% head() %>% View()
+
+# Contamos valores totales por zona climática:
+db %>% group_by(zona_climatica) %>% View()
 
 ```
 
