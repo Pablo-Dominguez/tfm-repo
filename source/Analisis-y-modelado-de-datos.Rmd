@@ -40,13 +40,13 @@ Nos encontramos con un conjunto de datos obtenidos a partir de mediciones meteor
 
 En la referencia mencionada advierten que el control de calidad aplicado a la captura de estos datos ha sido limitado, por lo que es posible que existan imprecisiones debidas a datos faltantes, valores acumulados tras varios datos faltantes o errores de varios tipos. Es por este motivo que empezaremos nuestro estudio realizando una revisión de la calidad y estructura del dato. Tras este proceso, construiremos una serie de variables que transformarán el problema y la estructura de datos para que puedan aplicarse los modelos de clasificación supervisada planteados.
 
-Partiendo de la base de datos procesada, la segmentaremos para aplicar varios modelados diferentes por zonas (siguiendo cierto criterio). Finalmente, compararemos los modelos, los ensamblaremos y presentaremos unos resultados de la precisión del modelo final.
+Partiendo de la base de datos procesada, la segmentaremos para aplicar varios modelados diferentes por cada zona climática^[Desarolladas en el *National Construction Code* por el *Buró de Metereología del Gobierno de Australia*]. Finalmente, compararemos los modelos, los ensamblaremos y presentaremos unos resultados de la precisión del modelo final.
 
 Con esta aplicación práctica de los modelos teóricos abordados en el capítulo anterior buscamos reflejar la capacidad de herramientas matemáticas abstractas a la hora de resolver situaciones que pueden tener un gran beneficio en varios ámbitos, tales como sociales, económicos o medioambientales.
 
 ## Origen de los datos y variable objetivo
 
-El buró de metereología australiano coordina una serie de estaciones metereológicas locales repartidas a lo largo del territorio. De esta manera, recopila y reporta datos sobre mediciones meteorológicas. En nuestro caso, tenemos información de **(numero)** ciudades repartidos a lo largo de **cantidad** años.
+El buró de metereología australiano coordina una serie de estaciones metereológicas locales repartidas a lo largo del territorio. De esta manera, recopila y reporta datos sobre mediciones meteorológicas. En nuestro caso, tenemos información de 49 ciudades repartida a lo largo de unos 8 años.
 
 ```{r echo=FALSE}
 
@@ -67,13 +67,45 @@ db %>% head() %>%  select(-c(6:19)) %>% add_column(.,rep("---",6),.after = 5) %>
 # decompose()
 ```
 
+Destacar que hemos importado las variables tipo *string* como *factor*. A continuación, podemos comprobar el tipo de cada variable:
+
 ```{r Tipos de datos}
 # Buscar manera alternativa (representable) de evaluar los tipos de dato.
 str(db)
 ```
 
+De esta manera, según se refleja en @NADWO, el conjunto de datos con el que vamos a trabajar cuenta con las siguientes variables:
 
-## Información de los datos
+ - *Date*: Fecha en la que se realizó la medición, en formato *AAAA-MM-DD*.
+ - *Location*: Localización donde se realizó la medición. 
+ - *MinTemp*: Temperatura mínima alcanzada, medida en grados celsius^[En un rango de 24 horas desde las 9am.]. 
+ - *MaxTemp*: Temperatura máxima alcanzada, medida en grados celsius^[En un rango de 24 horas desde las 9am.].
+ - *Rainfall*: Cantidad total de precipitación, medida en milímetros^[En un rango de 24 horas desde las 9am.]. 
+ - *Evaporation*: Evaporación en milímetros sobre un *tanque evaporimétrico clase "A"*^[En un rango de 24 horas desde las 9am.]. 
+ - *Sunshine*: Tiempo en horas de alto nivel de luminosidad solar^[En un rango de 24 horas desde las 12am.].
+ - *WindGustDir*: Dirección general del viento racheado a lo largo del día^[En un rango de 24 horas desde las 12am.], tomando una de las 16 direcciones posibles del viento.
+ - *WindGustSpeed*: Velocidad global del viento racheado a lo largo del día^[En un rango de 24 horas desde las 12am.], medido en kilómetros por hora.
+ - *WindDir9am*, *WindDir3pm*: Dirección promedio del viento en los 10 minutos previos a la hora indicada en cada variable.
+ - *WindSpeed9am*, *WindSpeed3pm*: Velocidad promedio del viento en los 10 minutos previos a la hora indicada en cada variable, medida en kilómetros por hora.
+ - *Humidity9am*, *Humidity3pm*: Humedad relativa, medida en tanto porciento, a las horas indicadas en cada variable.
+ - *Pressure9am*, *Pressure3pm*: Presión atmosférica medida a nivel del mar a las horas indicadas en cada variable, usando el hectopascal como unidad de medida.
+ - *Cloud9am*, *Cloud3pm*: Fracción del cielo cubierta por nubes a las horas indicadas, medida en *octas de cielo*.
+ - *Temp9am*, *Temp3pm*: Temperatura en grados celsius medida a las horas indicadas.
+ - *RainToday*, *RainTomorrow*: Variables binarias indicando si ha habido o no lluvia ese día. 
+ 
+De este modo, *RainTomorrow* será nuestra variable objetivo en los clasificadores. Con ello, desarrollaremos estrategias buscando que los modelos puedan decidir lo mejor posible si, dadas las observaciones de un día e información agregada de días anteriores, lloverá o no al día siguiente.
+
+## Información de los datos y filtrado de datos
+
+A continuación, buscamos comprobar si la serie temporal está completa y sin repetidos para cada valor de la variable *Location*. En la tabla mostrada a continuación, se muestran las variables conteniendo la siguiente información:
+
+ - *min_fec*, *max_fec*: Fecha donde comienzan y terminan los datos en la serie temporal.
+ - *obs*: Número de observaciones total en cada serie temporal.
+ - *rep*: Booleano que representa si existen fechas repetidas dentro de la serie temporal, esto es, *FALSE* indica ausencia de fechas repetidas.
+ - *n_diff_dates*: Cantidad de fechas faltantes dentro de la serie temporal.
+ - *top_diff_date*: Última fecha faltante en la serie temporal.
+ - *range_free*: Cantidad de datos sin fechas faltates medidos hacia atrás desde el último registro. Es decir, longitud de la serie temporal continua más reciente.
+ - *range*: Rango, medido en dias, de la serie temporal. Esto es, número de días entre *max_fec* y *min_fec*.
 
 ```{r Rangos de fechas, echo=FALSE}
 
@@ -136,8 +168,10 @@ dates_df %>% View()
 
 ```
 
-*renombrar columnas
-Hablamos sobre la brecha de fechas, sobre los datos faltantes y el "salto" cuando ya no hay datos faltantes: 2013-03-01. Filtramos por el último valor a partir del cual no hay datos faltantes, esto es, 2013-12-31
+Como podemos observar en el análisis anterior, vemos que la localización *NorahHead* tiene el último hueco en su serie temporal el *2013-12-31*. Es por este motivo que vamos a filtrar a partir de este valor con el fin de asegurarnos que no existan fechas faltantes dentro de las series temporales.
+Se puede observar además que el resto de localizaciones tienen como último salto en su serie temporal la fecha *2013-02-28*, y que las localizaciones de *Katherine*, *Nhil* y *Uluru* comienzan su serie temporal el *2013-03-01*. Esto es, que cuando comenzó a haber registros en estastres localizaciones dejó de haber errores de grabado de datos en la serie temporal en el resto de localizaciones (salvo en *NorahHead*). Este suceso dentro del proceso de grabación de datos podría ser indicativo de una reestructuración de los mecanismos de captación de los datos climáticos por parte del buró de meteorología australiano. 
+
+A continuación, filtrando sobre la fecha mencionada se puede observar que ya no existen discontinuidades en ninguna serie temporal:
 
 ```{r Filtramos por fecha mayor a 2013-12-31 y menor a 2017-06-24}
 
@@ -150,7 +184,18 @@ dates_df %>% View()
 
 ```
 
-Hablar de cómo hemos asignado las zonas climáticas. Puto google maps y el mapa ese del aus gov
+## Agrupación por zona climática
+ 
+Con el objetivo de modelar con mayor precisión los datos, vamos a realizar una segmentación de la información asignando la zona climática^[Desarolladas en el *National Construction Code* por el *Buró de Metereología del Gobierno de Australia*] a la que pertenece cada localización. Estas zonas están descritas de la siguiente manera:
+
+ - *Zona 1*: Veranos húmedos y cálidos, con inviernos cálidos.
+ - *Zona 2*: Veranos húmedos y templados, con inviernos suaves.
+ - *Zona 3*: Veranos secos y cálidos, con inviernos cálidos.
+ - *Zona 4*: Veranos secos y cálidos, con inviernos frescos.
+ - *Zona 5*: Clima templado.
+ - *Zona 6*: Clima suave.
+ - *Zona 7*: Clima fresco.
+ - *Zona 8*: Clima alpino.
 
 
 ```{r Agrupamos por zonas climáticas}
@@ -205,9 +250,9 @@ zonas_climaticas %>% View()
 
 ```
 
-Hablar de otros posibles criterios con los que segmentar los datos. Clustering no supervisado con k=8 y comparar el ratio de coincidencia de una categorización contra la otra.
+Una estrategia alternativa que planteamos como propuesta de mejora en este punto consistiría en realizar un clustering no supervisado, de manera que se segmenten los datos en 8 categorías no equitativas. A continuación, compararíamos esta categorización no supervisada contra la categorización por zona climática para comprobar la similitud de ambas asignaciones.
 
-Hemos eliminado localizaciones las cuales no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado *NorfolkIsland*, *Portland*, *Richmond*, *Walpole* y *Williamtown*. Mostramos observaciones por zona climática.
+En cualquier caso, en el planteamiento que proponemos hemos eliminado aquellas localizaciones donde no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado *NorfolkIsland*, *Portland*, *Richmond*, *Walpole* y *Williamtown*. Mostramos observaciones por zona climática.
 
 ```{r Información por zona climática}
 
@@ -235,9 +280,10 @@ dates_df %>% View()
 
 ```
 
-Comprobar tipos de datos
 
 ## División y limpiado de los datos
+
+Ahora si, estamos en disposición de crear un conjunto de datos para cada zona climática, a los cuales someteremos a una limpieza y procesado de datos. Es importante aplicar este procedimiento por separado para cada zona climática ya que imputaremos datos faltantes entre otras técnicas, para lo cual nos interesa que la información con la que sustituimos estos valores sea coherente con la subdivisión del conjunto de datos original.
 
 ```{r}
 
@@ -271,11 +317,15 @@ print(nrow(db) == (nrow(db_zone1) + nrow(db_zone2) + nrow(db_zone3) + nrow(db_zo
 
 ```
 
-### Tratamiento de los atributos: missing, outliers, normalización, balanceo de datos--> Renombrar: Calidad del dato.
+Tenemos por tanto el conjunto de datos segmentado en 8 zonas disjuntas, que abordaremos y modelaremos en paralelo.
 
-Hablar que tratamos los datos por cada zona, de forma que la imputación de valores faltantes respete dicha división.
+### Calidad del dato
+
+A continuación, nos disponemos a tratar los aspectos relativos a la calidad del dato. Esto es, tratamiento de valores faltates o *missings*, valores atípicos o *outliers*, normalización de los datos y balanceo de los datos.
 
 #### Missings
+
+En la tabla que se muestra abajo se refleja el porcentaje en tanto por ciento de valores faltantes en cada variable por zona climática.
 
 ```{r Detect missings}
 
@@ -304,10 +354,9 @@ get_missings <- function(){
 df_missings <- get_missings()
 df_missings %>% View()
 
-# Vamos a eliminar todas las variables que tienen el 100% de NA en la zona8, esto es,
-# Evaporation, Sunshine, Pressure9am, Pressure3pm, Cloud9am, Cloud3pm, ya que hay indicativos de que esta información ha sido grabada incorrectamente (con un alto número de NAs para todas las zonas climáticas).
-
 ```
+
+Podemos observar que existen múltiples variables que tienen un *100%* de valores faltantes para la zona climática 8. Además, estas mismas variables una gran cantidad de valores faltantes en el resto de zonas climáticas, por lo que prescindiremos de ellas por su baja calidad del dato. Las variables de las que prescindiremos aplicando este criterio son *Evaporation*, *Sunshine*, *Pressure9am*, *Pressure3pm*, *Cloud9am* y *Cloud3pm*.
 
 ```{r}
 for(i in 1:length(zonas)){
@@ -315,12 +364,18 @@ for(i in 1:length(zonas)){
 }
 ```
 
+Una vez eliminadas dichas variables, resta por tratar el resto de columnas que presentan valores faltantes. Vemos que, a lo más, hay un *15%* de valores faltantes para la variable *Humidity3pm* en la zona climática 1, mientras que el resto de variables tiene menos de un *10%* de valores faltantes.
 
-Metrics imputations is a way to fill NaN values with some special metrics that depend on your data: mean or median for example.
+Con el objetivo de presentar a los modelos datos limpios con los que puedan trabajar, vamos a imputar de diferentes maneras los datos faltantes según el tipo de dato de cada columna:
 
-Mean value is the sum of a value in a series divided by a number of all values of series. It is one of the most used types of metrics in statistics. But why do we impute the NaN values with mean value? Mean has a very interesting property, it doesn’t change if you add some more mean values to your series.
+ - En las columnas numéricas (no enteras), sustuiremos en cada variable los valores faltantes por el valor promedio de dicha variable en cada zona.
+ - En las columnas enteras, aplicaremos un tratamiento similar sustituyendo los valores faltantes por la parte entera de dicho valor promedio.
+ - En las columnas categóricas, reemplazaremos los valores faltantes por el valor modal de cada variable en cada zona. Destacar que si el valor modal es *NA*, lo sustituiremos por el siguiente valor categórico más frecuente dentro de la zona climática.
+ 
+La decisión del uso de estos estadísticos para imputar los valores faltantes de cada variable queda respaldada por el hecho de que el uso de estos estadísticos minimiza el impacto de la imputación sobre los propios estadísticos. Esto es, sustituir valores faltantes por la media no modifica la media de la distribución subyacente.
 
-```{r}
+
+```{r función para calcular la moda}
 calc_mode <- function(x){
   
   # List the distinct / unique values
@@ -367,7 +422,11 @@ df_missings %>% View()
 
 ```
 
+Vemos finalmente que tras el proceso de imputación detallado anteriormente ya no contamos con ningún valor faltante en ninguna variable.
+
 #### Outliers
+
+Mostramos a continuación una serie de diagramas de cajas y violín para cada variable separado por valor de la variable objetivo, para cada zona climática.
 
 ```{r Get outliers, eval = FALSE}
 
@@ -399,11 +458,11 @@ plot_list <- get_outliers()
 # For zona in names(plot_list) print nicely test["zona1"]$zona1
 ```
 
-No vamos a tratar los outliers porque consideramos que son de valor para el entrenamiento de los modelos. Nos limitaremos entonces a realizar una normalización de los datos numéricos junto con una selección de variables aplicando por PCA y FAMD
+Debido a la naturaleza caótica del tiempo, no vamos a tratar los outliers como valores atípicos porque consideramos que son de valor para el entrenamiento de los modelos. Nos limitaremos entonces a realizar una normalización de los datos numéricos junto con una selección de variables aplicando por un algoritmo de *ranking* de variables tipo *step*.
 
 #### Transformación de las variables categóricas
 
-Las variables categóricas que disponemos son "Location"     "WindGustDir"  "WindDir9am"   "WindDir3pm"   "RainToday"    "RainTomorrow". Para la 1,5 y 6 vamos a aplicar técnicas de one hot encoding. Por otra parte, para las relativas a la dirección del viento, vamos a aplicar una transformación de forma que combinemos esta información con las variables enteras relativas a la intensidad del viento, obteniendo una información numérica que expresa el valor del coseno y del seno de dicha dirección.
+Las variables categóricas que disponemos son *Location*, *WindGustDir*, *WindDir9am*, *WindDir3pm*, *RainToday* y *RainTomorrow*. Para *Location*,*RainToday* y *RainTomorrow* vamos a aplicar técnicas de one hot encoding con las que transformaremos estas variables en numéricas. Por otro lado, para las variables categóricas relativas a la dirección del viento, vamos a aplicar una transformación de forma que combinemos esta información con las variables enteras relativas a la intensidad del viento, obteniendo dos variables numéricas que expresan el valor del coseno y del seno del vector viento.
 
 
 ```{r Transformación de variables categóricas}
@@ -414,6 +473,10 @@ trsf <- data.frame(predict(dmy, newdata = zonas[[1]]))
 zonas[[1]] <- zonas[[1]] %>% select(., -any_of(c("Location","RainToday","RainTomorrow"))) %>% cbind(.,trsf)
 zonas[[1]] %>% head() %>% View()
 ```
+
+De esta manera, tras el proceso de *one hot encoding*, explotamos cada variable categórica con *n* niveles en *n* variables binarias.
+
+Finalmente, asignamos un valor en radianes a cada dirección del viento, calculamos el coseno y el seno de dicha dirección y los multiplicamos por la variable respectiva de intensidad del viento.
 
 ```{r Transformación de variables de viento}
 
@@ -432,9 +495,8 @@ zonas[[1]] %>% transform(., WindGustDir=radianes[as.character(zonas[[1]]$WindGus
 
 
 
-
-
 #### Normalización de datos.
+
 
 justificar la normalización. Bien para el modelado, bien para el FS
 
