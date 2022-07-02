@@ -24,6 +24,7 @@ header-includes:
 ```{r message=FALSE, echo=FALSE}
 library(tidyverse)
 library(kableExtra)
+library(ggpubr)
 ```
 
 ## Planteamiento del problema a abordar
@@ -69,53 +70,61 @@ str(db)
 
 ```{r Rangos de fechas, echo=FALSE}
 
-min_fec <- c()
-max_fec <- c()
-obs <- c()
-rep <- c()
-n_diff_dates_vec <- c()
-top_diff_date_vec <- c()
-range_free_vec <- c()
+# Creamos función que comprueba rango de fechas
 
-for(city in levels(db$Location)){
-  # Filtramos el ds por ciudad
-  db_filtered <- db %>% filter(.,Location==city)
+err_cities <- c()
+date_range <- function(){
+  # Inicializamos los vectores
+  min_fec <- c()
+  max_fec <- c()
+  obs <- c()
+  rep <- c()
+  n_diff_dates_vec <- c()
+  top_diff_date_vec <- c()
+  range_free_vec <- c()
   
-  # Calculamos el minimo y el máximo de la variable Date
-  mind <- format(as.Date(min(db_filtered$Date),format="%Y-%m-%d"))
-  min_fec <- c(min_fec,mind)
-  maxd <- format(as.Date(max(db_filtered$Date),format="%Y-%m-%d"))
-  max_fec <- c(max_fec,maxd)
+  # Iteramos por cada ciudad
+  for(city in levels(db$Location)){tryCatch({
+    
+    # Filtramos el ds por ciudad
+    db_filtered <- db %>% filter(.,Location==city)
+    
+    # Calculamos y almacenamos el mínimo y el máximo de la variable Date
+    mind <- format(as.Date(min(db_filtered$Date),format="%Y-%m-%d"))
+    min_fec <- c(min_fec,mind)
+    maxd <- format(as.Date(max(db_filtered$Date),format="%Y-%m-%d"))
+    max_fec <- c(max_fec,maxd)
+    
+    # Comprobamos rangos de fecha
+    fech_range <- seq(mind %>% as.Date(), maxd %>% as.Date(), "days")
+    diff_dates <- setdiff(fech_range,db_filtered$Date) %>% as.Date(., origin="1970-01-01")
+    if(length(diff_dates)>0){ # hay fechas faltantes
+      top_diff_date <- max(diff_dates) %>% as.Date(., origin="1970-01-01")
+      top_diff_date_vec <- c(top_diff_date_vec,top_diff_date)
+      n_diff_dates <- length(diff_dates)
+      n_diff_dates_vec <- c(n_diff_dates_vec,n_diff_dates)
+      range_free <- seq(top_diff_date %>% as.Date(),maxd %>% as.Date(), "days") %>% length()
+      range_free_vec <- c(range_free_vec,range_free)
+    } else {
+      top_diff_date_vec <- c(top_diff_date_vec,NA)
+      n_diff_dates_vec <- c(n_diff_dates_vec,0)
+      range_free_vec <- c(range_free_vec,NA)
+    }
+    obs <- c(obs,length(db_filtered$Date))
+    rep <- c(rep,length(unique(db_filtered$Date))!=length(db_filtered$Date))
+  },error = function(e) print(city))}
   
-  # Comprobamos rangos de fecha
-  fech_range <- seq(mind %>% as.Date(), maxd %>% as.Date(), "days")
-  diff_dates <- setdiff(fech_range,db_filtered$Date) %>% as.Date(., origin="1970-01-01")
-  if(length(diff_dates)>0){
-    top_diff_date <- max(diff_dates) %>% as.Date(., origin="1970-01-01")
-    top_diff_date_vec <- c(top_diff_date_vec,top_diff_date)
-    n_diff_dates <- length(diff_dates)
-    n_diff_dates_vec <- c(n_diff_dates_vec,n_diff_dates)
-    range_free <- seq(top_diff_date %>% as.Date(),maxd %>% as.Date(), "days") %>% length()
-    range_free_vec <- c(range_free_vec,range_free)
-  } else {
-    top_diff_date_vec <- c(top_diff_date_vec,NA)
-    n_diff_dates_vec <- c(n_diff_dates_vec,0)
-    range_free_vec <- c(range_free_vec,NA)
-  }
-  obs <- c(obs,length(db_filtered$Date))
-  rep <- c(rep,length(unique(db_filtered$Date))==length(db_filtered$Date))
+  dates_df <- data.frame(min_fec,max_fec,obs,rep,n_diff_dates_vec,top_diff_date_vec,range_free_vec, stringsAsFactors=TRUE)
+  dates_df$min_fec <- as.Date(dates_df$min_fec, format="%Y-%m-%d")
+  dates_df$max_fec <- as.Date(dates_df$max_fec, format="%Y-%m-%d")
+  dates_df <- mutate(dates_df, range = max_fec - min_fec+1)
+  dates_df$top_diff_date_vec <- dates_df$top_diff_date_vec %>% as.Date(., origin="1970-01-01")
+  
+  rownames(dates_df) <- levels(db$Location)
+  dates_df <- dates_df %>% rename(n_diff_dates=n_diff_dates_vec, top_diff_date=top_diff_date_vec, range_free = range_free_vec)
+  return(dates_df)
 }
-
-dates_df <- data.frame(min_fec,max_fec,obs,rep,n_diff_dates_vec,top_diff_date_vec,range_free_vec)
-dates_df$min_fec <- as.Date(dates_df$min_fec, format="%Y-%m-%d")
-dates_df$max_fec <- as.Date(dates_df$max_fec, format="%Y-%m-%d")
-dates_df <- mutate(dates_df, range = max_fec - min_fec)
-dates_df$años <- (dates_df$range / 365) %>% as.integer()
-dates_df$dias <- as.integer(dates_df$range)-365*(dates_df$años)
-dates_df$top_diff_date_vec <- dates_df$top_diff_date_vec %>% as.Date(., origin="1970-01-01")
-
-rownames(dates_df) <- levels(db$Location)
-
+dates_df <- date_range()
 dates_df %>% View()
 
 ```
@@ -126,56 +135,10 @@ Hablamos sobre la brecha de fechas, sobre los datos faltantes y el "salto" cuand
 ```{r Filtramos por fecha mayor a 2013-12-31 y menor a 2017-06-24}
 
 # Rango de a 2013-12-31 y menor a 2017-06-24
-db <- db %>% filter(.,Date>=as.Date("2013-12-31") & Date<=as.Date("2017-06-24"))
+db <- db %>% filter(.,Date>as.Date("2013-12-31") & Date<=as.Date("2017-06-24"))
 
 # Comprobamos datos limpios
-min_fec <- c()
-max_fec <- c()
-obs <- c()
-rep <- c()
-n_diff_dates_vec <- c()
-top_diff_date_vec <- c()
-range_free_vec <- c()
-
-for(city in levels(db$Location)){
-  # Filtramos el ds por ciudad
-  db_filtered <- db %>% filter(.,Location==city)
-  
-  # Calculamos el minimo y el máximo de la variable Date
-  mind <- format(as.Date(min(db_filtered$Date),format="%Y-%m-%d"))
-  min_fec <- c(min_fec,mind)
-  maxd <- format(as.Date(max(db_filtered$Date),format="%Y-%m-%d"))
-  max_fec <- c(max_fec,maxd)
-  
-  # Comprobamos rangos de fecha
-  fech_range <- seq(mind %>% as.Date(), maxd %>% as.Date(), "days")
-  diff_dates <- setdiff(fech_range,db_filtered$Date) %>% as.Date(., origin="1970-01-01")
-  if(length(diff_dates)>0){
-    top_diff_date <- max(diff_dates) %>% as.Date(., origin="1970-01-01")
-    top_diff_date_vec <- c(top_diff_date_vec,top_diff_date)
-    n_diff_dates <- length(diff_dates)
-    n_diff_dates_vec <- c(n_diff_dates_vec,n_diff_dates)
-    range_free <- seq(top_diff_date %>% as.Date(),maxd %>% as.Date(), "days") %>% length()
-    range_free_vec <- c(range_free_vec,range_free)
-  } else {
-    top_diff_date_vec <- c(top_diff_date_vec,NA)
-    n_diff_dates_vec <- c(n_diff_dates_vec,0)
-    range_free_vec <- c(range_free_vec,NA)
-  }
-  obs <- c(obs,length(db_filtered$Date))
-  rep <- c(rep,length(unique(db_filtered$Date))==length(db_filtered$Date))
-}
-
-dates_df <- data.frame(min_fec,max_fec,obs,rep,n_diff_dates_vec,top_diff_date_vec,range_free_vec)
-dates_df$min_fec <- as.Date(dates_df$min_fec, format="%Y-%m-%d")
-dates_df$max_fec <- as.Date(dates_df$max_fec, format="%Y-%m-%d")
-dates_df <- mutate(dates_df, range = max_fec - min_fec)
-dates_df$años <- (dates_df$range / 365) %>% as.integer()
-dates_df$dias <- as.integer(dates_df$range)-365*(dates_df$años)
-dates_df$top_diff_date_vec <- dates_df$top_diff_date_vec %>% as.Date(., origin="1970-01-01")
-
-rownames(dates_df) <- levels(db$Location)
-
+dates_df <- date_range()
 dates_df %>% View()
 
 ```
@@ -185,6 +148,7 @@ Hablar de cómo hemos asignado las zonas climáticas. Puto google maps y el mapa
 
 ```{r Agrupamos por zonas climáticas}
 
+# Creamos vectores de zonas climáticas
 zona1 <- c("Exmouth", "Dampier", "PortHedland", "Broome", "Derby", "Wyndham", "TimberCreek", "Katherine","Darwin", "Oenpelli", "Borroloola", "Nhulunbuy","Burketown", "Weipa", "Cooktown", "Cairns", "Townsville")
 zona2 <- c("Mackay", "Rockhampton", "Maryborough", "Brisbane", "CoffsHarbour","GoldCoast")
 zona3 <- c("Goondiwindi", "Taroom","Charleville", "Longreach","Thargomindah","Birdsville","MountIsa","AliceSprings","Kulgera","Yulara","Telfer","Newman", "GascoyneJunction","Carnavon","Uluru")
@@ -197,6 +161,7 @@ zona8 <- c("MountGinini")
 zonas <- c(zona1,zona2,zona3,zona4,zona5,zona6,zona7,zona8)
 zona_climatica <- c()
 
+# Asignamos cada ciudad a una zona climática
 for(city in levels(db$Location)){
   if(city %in% zona1){
     zona_climatica <- c(zona_climatica,1)
@@ -218,27 +183,216 @@ for(city in levels(db$Location)){
   }
   else if(city %in% zona7){
     zona_climatica <- c(zona_climatica,7)
-  } else {
+  } 
+  else if(city %in% zona8){
+    zona_climatica <- c(zona_climatica,8)
+  } 
+  else { # Los lugares sin zona climática le asignamos el 0, para luego eliminar estas observaciones
     zona_climatica <- c(zona_climatica,0)
   }
 }
 
+# Creamos dataframe de zonas climáticas
 zonas_climaticas <- data.frame(levels(db$Location),zona_climatica) %>% rename(Location=levels.db.Location.)
 zonas_climaticas %>% View()
 
 ```
 
-Hemos eliminado localizaciones las cuales no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado: (lista ciudades). Mostramos observaciones por zona climática.
+Hemos eliminado localizaciones las cuales no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado *NorfolkIsland*, *Portland*, *Richmond*, *Walpole* y *Williamtown*. Mostramos observaciones por zona climática.
 
 ```{r Conteo de observaciones por zona climática}
 
 # Añadimos las zonas climáticas
 
-db <- left_join(zonas_climaticas,db, by="Location")
-db %>% head() %>% View()
+db <- left_join(zonas_climaticas,db, by="Location",strings)
+db$Location <- db$Location %>% as.factor()
+
+# Eliminamos la zona climática 0
+db <- db %>% filter(., zona_climatica != 0)
+db <- droplevels(db)
+#db$zona_climatica <- db$zona_climatica %>% as.factor()
 
 # Contamos valores totales por zona climática:
-db %>% group_by(zona_climatica) %>% View()
+db %>% count(zona_climatica) %>% View()
+
+# Contamos cantidad de ciudades por zona climática
+db %>% count(zona_climatica,Location) %>%count(zona_climatica,name="n_locations") %>%  View()
+
+# Comprobamos datos continuos
+db %>% count(zona_climatica,Location) %>% View() # esto confirma que tenemos 1272 datos para cada ciudad
+dates_df <- date_range()
+dates_df %>% View()
+
 
 ```
 
+Comprobar tipos
+
+## División y limpiado de los datos
+
+```{r}
+
+db_zone1 <- db %>% filter(., zona_climatica == 1) %>% select(., -zona_climatica)
+db_zone2 <- db %>% filter(., zona_climatica == 2) %>% select(., -zona_climatica)
+db_zone3 <- db %>% filter(., zona_climatica == 3) %>% select(., -zona_climatica)
+db_zone4 <- db %>% filter(., zona_climatica == 4) %>% select(., -zona_climatica)
+db_zone5 <- db %>% filter(., zona_climatica == 5) %>% select(., -zona_climatica)
+db_zone6 <- db %>% filter(., zona_climatica == 6) %>% select(., -zona_climatica)
+db_zone7 <- db %>% filter(., zona_climatica == 7) %>% select(., -zona_climatica)
+db_zone8 <- db %>% filter(., zona_climatica == 8) %>% select(., -zona_climatica)
+# Creamos diccionario con los df para poder iterar
+zonas <- list("zona1"=db_zone1,
+           "zona2"=db_zone2,
+           "zona3"=db_zone3,
+           "zona4"=db_zone4,
+           "zona5"=db_zone5,
+           "zona6"=db_zone6,
+           "zona7"=db_zone7,
+           "zona8"=db_zone8)
+print(nrow(db) == (nrow(db_zone1) + nrow(db_zone2) + nrow(db_zone3) + nrow(db_zone4) + nrow(db_zone5) + nrow(db_zone6) + nrow(db_zone7) + nrow(db_zone8)))
+
+
+```
+
+### Tratamiento de los atributos: missing, outliers, normalización, balanceo de datos--> Renombrar: Calidad del dato.
+
+
+#### Missings
+
+```{r Detect missings}
+
+# Crear función de comprobar missings
+# counting missing values
+get_missings <- function(){
+  df_missings <- NULL;
+  total_rows <- c()
+  for(i in 1:length(zonas)){
+    row <- zonas[[i]] %>% select(everything()) %>% summarise_all(funs(sum(is.na(.))))*100 / nrow(zonas[[i]])
+    total_rows <- c(total_rows,nrow(zonas[[i]]))
+    df_missings <- df_missings %>% rbind(.,row)
+  }
+  df_missings["Total obs"] <- total_rows
+  rownames(df_missings) <- c("zona1",
+                              "zona2",
+                              "zona3",
+                              "zona4",
+                              "zona5",
+                              "zona6",
+                              "zona7",
+                              "zona8")
+  return(df_missings)
+  
+}
+df_missings <- get_missings()
+df_missings %>% View()
+
+# Vamos a eliminar todas las variables que tienen el 100% de NA en la zona8, esto es,
+# Evaporation, Sunshine, Pressure9am, Pressure3pm, Cloud9am, Cloud3pm, ya que hay indicativos de que esta información ha sido grabada incorrectamente (con un alto número de NAs para todas las zonas climáticas).
+
+```
+
+```{r}
+for(i in 1:length(zonas)){
+  zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("Evaporation", "Sunshine", "Pressure9am", "Pressure3pm", "Cloud9am", "Cloud3pm")))
+}
+```
+
+
+Metrics imputations is a way to fill NaN values with some special metrics that depend on your data: mean or median for example.
+
+Mean value is the sum of a value in a series divided by a number of all values of series. It is one of the most used types of metrics in statistics. But why do we impute the NaN values with mean value? Mean has a very interesting property, it doesn’t change if you add some more mean values to your series.
+
+```{r}
+calc_mode <- function(x){
+  
+  # List the distinct / unique values
+  distinct_values <- unique(x)
+  
+  # Count the occurrence of each distinct value
+  distinct_tabulate <- tabulate(match(x, distinct_values))
+  top <- which.max(distinct_tabulate) 
+  # Return the value with the highest occurrence
+  mode <- distinct_values[top]
+  if(is.na(mode)){
+    top <- distinct_tabulate[distinct_tabulate!=distinct_tabulate[top]] %>% which.max()
+    mode <- distinct_values[top]
+  }
+  return(mode)
+}
+```
+
+
+```{r Replace missings}
+# mutate missing values
+
+columnas_enteras <- zonas[[1]][, unlist(lapply(zonas[[1]], is.integer), use.names = FALSE) ] %>% colnames()
+columnas_numericas <- zonas[[1]][, unlist(lapply(zonas[[1]], is.numeric), use.names = FALSE) ] %>% colnames() %>% setdiff(.,columnas_enteras)
+columnas_categoricas <- zonas[[1]][, unlist(lapply(zonas[[1]], is.factor), use.names = FALSE) ] %>% colnames()
+
+# reemplazamos variables continuas por la media
+for(i in 1:length(zonas)){
+  zonas[[i]] <- zonas[[i]] %>% mutate_at(columnas_numericas, ~replace_na(.,mean(., na.rm = TRUE))) 
+}
+
+# reemplazamos variables enteras por la media truncada
+for(i in 1:length(zonas)){
+  zonas[[i]] <- zonas[[i]] %>% mutate_at(columnas_enteras, ~replace_na(.,floor(mean(., na.rm = TRUE)))) 
+}
+
+# reemplazamos variables categóricas por la moda
+for(i in 1:length(zonas)){
+  zonas[[i]] <- zonas[[i]] %>% mutate_at(columnas_categoricas, ~replace_na(.,calc_mode(.))) 
+}
+
+get_missings
+df_missings %>% View()
+
+```
+
+#### Outliers
+
+```{r Get outliers}
+
+get_outliers <- function(){
+  plots_list <- c()
+  for(i in 1:length(zonas)){
+    ps <- list()
+    db_temp <- zonas[[i]] 
+    for(colu in db_temp %>% colnames() %>% setdiff(.,"RainTomorrow")){
+      p <- ggplot(zonas[[i]], aes_string(x="RainTomorrow", y=colu, color="RainTomorrow")) + geom_violin() + geom_boxplot(width=0.25) + stat_boxplot(geom = "errorbar", width = 0.2) + theme(
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        legend.key.size = unit(0.1, 'cm'),
+        legend.text = element_text(size=8),
+        legend.title = element_blank())
+      ps[[colu]] <- p
+    }
+    plots_list <- c(plots_list,paste0("zona"+as.character(i))=ggarrange(plotlist =  ps, nrow = 4,ncol = 3,common.legend = TRUE))
+    dev.off()
+  }
+  return(plots_list)
+}
+
+```
+
+
+## Eliminación de variables y representación de los datos
+
+### Feature selection
+
+As presented in^[An Introduction to Variable and Feature Selection - @AITFS], hemos seguido los pasos que proponen a la hora de trabajar, es decir:
+
+
+### Representación
+
+Distribuciones (histogramas)
+
+Comprobar la proporción de dias que llueve vs dias que no por zona (rain_ratio)
+
+## Creación de nuevas variables ventana
+
+## Modelado
+
+### Train-test split
