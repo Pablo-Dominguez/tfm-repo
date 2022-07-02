@@ -25,6 +25,13 @@ header-includes:
 library(tidyverse)
 library(kableExtra)
 library(ggpubr)
+library(randomForest)
+library(mlbench)
+library(caret)
+library(FactoMineR)
+library(factoextra)
+library(mltools)
+library(data.table)
 ```
 
 ## Planteamiento del problema a abordar
@@ -84,7 +91,7 @@ date_range <- function(){
   range_free_vec <- c()
   
   # Iteramos por cada ciudad
-  for(city in levels(db$Location)){tryCatch({
+  for(city in levels(db$Location)){
     
     # Filtramos el ds por ciudad
     db_filtered <- db %>% filter(.,Location==city)
@@ -112,7 +119,7 @@ date_range <- function(){
     }
     obs <- c(obs,length(db_filtered$Date))
     rep <- c(rep,length(unique(db_filtered$Date))!=length(db_filtered$Date))
-  },error = function(e) print(city))}
+  }
   
   dates_df <- data.frame(min_fec,max_fec,obs,rep,n_diff_dates_vec,top_diff_date_vec,range_free_vec, stringsAsFactors=TRUE)
   dates_df$min_fec <- as.Date(dates_df$min_fec, format="%Y-%m-%d")
@@ -198,9 +205,11 @@ zonas_climaticas %>% View()
 
 ```
 
+Hablar de otros posibles criterios con los que segmentar los datos. Clustering no supervisado con k=8 y comparar el ratio de coincidencia de una categorización contra la otra.
+
 Hemos eliminado localizaciones las cuales no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado *NorfolkIsland*, *Portland*, *Richmond*, *Walpole* y *Williamtown*. Mostramos observaciones por zona climática.
 
-```{r Conteo de observaciones por zona climática}
+```{r Información por zona climática}
 
 # Añadimos las zonas climáticas
 
@@ -226,20 +235,28 @@ dates_df %>% View()
 
 ```
 
-Comprobar tipos
+Comprobar tipos de datos
 
 ## División y limpiado de los datos
 
 ```{r}
 
 db_zone1 <- db %>% filter(., zona_climatica == 1) %>% select(., -zona_climatica)
+db_zone1 <- droplevels(db_zone1)
 db_zone2 <- db %>% filter(., zona_climatica == 2) %>% select(., -zona_climatica)
+db_zone2 <- droplevels(db_zone2)
 db_zone3 <- db %>% filter(., zona_climatica == 3) %>% select(., -zona_climatica)
+db_zone3 <- droplevels(db_zone3)
 db_zone4 <- db %>% filter(., zona_climatica == 4) %>% select(., -zona_climatica)
+db_zone4 <- droplevels(db_zone4)
 db_zone5 <- db %>% filter(., zona_climatica == 5) %>% select(., -zona_climatica)
+db_zone5 <- droplevels(db_zone5)
 db_zone6 <- db %>% filter(., zona_climatica == 6) %>% select(., -zona_climatica)
+db_zone6 <- droplevels(db_zone6)
 db_zone7 <- db %>% filter(., zona_climatica == 7) %>% select(., -zona_climatica)
+db_zone7 <- droplevels(db_zone7)
 db_zone8 <- db %>% filter(., zona_climatica == 8) %>% select(., -zona_climatica)
+db_zone8 <- droplevels(db_zone8)
 # Creamos diccionario con los df para poder iterar
 zonas <- list("zona1"=db_zone1,
            "zona2"=db_zone2,
@@ -256,6 +273,7 @@ print(nrow(db) == (nrow(db_zone1) + nrow(db_zone2) + nrow(db_zone3) + nrow(db_zo
 
 ### Tratamiento de los atributos: missing, outliers, normalización, balanceo de datos--> Renombrar: Calidad del dato.
 
+Hablar que tratamos los datos por cada zona, de forma que la imputación de valores faltantes respete dicha división.
 
 #### Missings
 
@@ -344,20 +362,20 @@ for(i in 1:length(zonas)){
   zonas[[i]] <- zonas[[i]] %>% mutate_at(columnas_categoricas, ~replace_na(.,calc_mode(.))) 
 }
 
-get_missings
+df_missings <- get_missings()
 df_missings %>% View()
 
 ```
 
 #### Outliers
 
-```{r Get outliers}
+```{r Get outliers, eval = FALSE}
 
 get_outliers <- function(){
-  plots_list <- c()
+  plots_list <- list()
   for(i in 1:length(zonas)){
     ps <- list()
-    db_temp <- zonas[[i]] 
+    db_temp <- zonas[[i]][,c(columnas_enteras,columnas_numericas)]
     for(colu in db_temp %>% colnames() %>% setdiff(.,"RainTomorrow")){
       p <- ggplot(zonas[[i]], aes_string(x="RainTomorrow", y=colu, color="RainTomorrow")) + geom_violin() + geom_boxplot(width=0.25) + stat_boxplot(geom = "errorbar", width = 0.2) + theme(
         axis.text.x = element_blank(),
@@ -369,20 +387,83 @@ get_outliers <- function(){
         legend.title = element_blank())
       ps[[colu]] <- p
     }
-    plots_list <- c(plots_list,paste0("zona"+as.character(i))=ggarrange(plotlist =  ps, nrow = 4,ncol = 3,common.legend = TRUE))
+    new_name <- paste0("zona",as.character(i))
+    plots_list[[new_name]] <- ggarrange(plotlist =  ps, nrow = 4,ncol = 3,common.legend = TRUE)
     dev.off()
   }
   return(plots_list)
 }
 
+plot_list <- get_outliers()
+
+# For zona in names(plot_list) print nicely test["zona1"]$zona1
 ```
 
+No vamos a tratar los outliers porque consideramos que son de valor para el entrenamiento de los modelos. Nos limitaremos entonces a realizar una normalización de los datos numéricos junto con una selección de variables aplicando por PCA y FAMD
+
+#### Transformación de las variables categóricas
+
+Las variables categóricas que disponemos son "Location"     "WindGustDir"  "WindDir9am"   "WindDir3pm"   "RainToday"    "RainTomorrow". Para la 1,5 y 6 vamos a aplicar técnicas de one hot encoding. Por otra parte, para las relativas a la dirección del viento, vamos a aplicar una transformación de forma que combinemos esta información con las variables enteras relativas a la intensidad del viento, obteniendo una información numérica que expresa el valor del coseno y del seno de dicha dirección.
+
+
+```{r Transformación de variables categóricas}
+
+# Iterar por zonas
+dmy <- dummyVars( ~ +Location+RainToday+RainTomorrow, data = zonas[[1]])
+trsf <- data.frame(predict(dmy, newdata = zonas[[1]]))
+zonas[[1]] <- zonas[[1]] %>% select(., -any_of(c("Location","RainToday","RainTomorrow"))) %>% cbind(.,trsf)
+zonas[[1]] %>% head() %>% View()
+```
+
+```{r Transformación de variables de viento}
+
+
+radianes <- list("E"=0,"ENE"=pi/8, "NE"=pi/4, "NNE"=3*pi/8, 
+                 "N" = pi/2,"NNW"=5*pi/8,"NW"=3*pi/4,"WNW"=7*pi/8,
+                 "W"=pi,"WSW"=9*pi/8,"SW"=5*pi/4,"SSW"=11*pi/8,
+                 "S"=3*pi/2,"SSE"=13*pi/8,"SE"=7*pi/4,"ESE"=15*pi/8)
+
+zonas[[1]] %>% transform(., WindGustDir=radianes[as.character(zonas[[1]]$WindGustDir)]) %>% head() %>% View()
+
+
+
+
+```
+
+
+
+
+
+#### Normalización de datos.
+
+justificar la normalización. Bien para el modelado, bien para el FS
 
 ## Eliminación de variables y representación de los datos
 
 ### Feature selection
 
+RESUMEN DE TODO: 
+- Las columnas categóricas son:"Location"     "WindGustDir"  "WindDir9am"   "WindDir3pm"   "RainToday"    "RainTomorrow". Vamos a sustituir las Wind_cosas por dos variables cada una, que indican el valor del seno (componente norte-sur) y el coseno(componente este-oeste) de la dirección del viento. Además, como tenemos información de la intesidad del viento por hora, multiplicaremos estos valores para agregar la información. Con este criterio, transformamos variablas variables numéricas y categóricas, las cuales con el resto de variables numéricas someteremos a un algoritmo step para seleccionar las más relevantes para el modelado. Adicionalmente, nos restan las variables categóricas "Location" y "RainToday", las cuales someteremos a un onehot encoding para el modelado.
+
+
+
+**Con las numéricas normalizamos y hacemos el step* y con las categóricas hacemos PCA
+
+Factorial Analysis of Mixed Data (FAMD)
+
 As presented in^[An Introduction to Variable and Feature Selection - @AITFS], hemos seguido los pasos que proponen a la hora de trabajar, es decir:
+
+ - Cosas de la lista
+ 
+```{r step for selecting most relevant numeric variables, eval=FALSE}
+
+summary(lm1 <- lm(Fertility ~ ., data = swiss))
+slm1 <- step(lm1)
+summary(slm1)
+slm1$anova
+
+```
+
 
 
 ### Representación
@@ -391,7 +472,9 @@ Distribuciones (histogramas)
 
 Comprobar la proporción de dias que llueve vs dias que no por zona (rain_ratio)
 
-## Creación de nuevas variables ventana
+## Creación de nuevas variables ventana para trend y seasonality
+
+Crear ventanas para RainToday de estadísticos rolling patrá
 
 ## Modelado
 
