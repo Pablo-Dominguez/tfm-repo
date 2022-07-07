@@ -2,12 +2,17 @@
 title: "Análisis y modelado de datos"
 author: "Pablo Domínguez"
 date: '2022-06-23'
-output: pdf_document
+output:
+  pdf_document:
+    number_sections: no
+    toc: yes
+    toc_depth: 3    
 bibliography: references.bib  
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{longtable}
 - \usepackage{array}
+- \usepackage{subcaption}
 - \usepackage{multirow}
 - \usepackage{wrapfig}
 - \usepackage{float}
@@ -19,6 +24,7 @@ header-includes:
 - \usepackage[normalem]{ulem}
 - \usepackage{makecell}
 - \usepackage{xcolor}
+- \usepackage[spanish,es-tabla]{babel}
 ---
 
 ```{r message=FALSE, echo=FALSE}
@@ -34,6 +40,8 @@ library(mltools)
 library(data.table)
 ```
 
+\listoftables
+
 ## Planteamiento del problema a abordar
 
 Nos encontramos con un conjunto de datos obtenidos a partir de mediciones meteorológicas realizadas por el gobierno de Australia^[Notes about Daily Weather Observations - @NADWO]. Estos datos, recogidos en distintas localidades, se han capturado realizando mediciones diarias de temperatura, lluvia, evaporación, sol, viento, humedad etc. 
@@ -43,6 +51,18 @@ En la referencia mencionada advierten que el control de calidad aplicado a la ca
 Partiendo de la base de datos procesada, la segmentaremos para aplicar varios modelados diferentes por cada zona climática^[Desarolladas en el *National Construction Code* por el *Buró de Metereología del Gobierno de Australia*]. Finalmente, compararemos los modelos, los ensamblaremos y presentaremos unos resultados de la precisión del modelo final.
 
 Con esta aplicación práctica de los modelos teóricos abordados en el capítulo anterior buscamos reflejar la capacidad de herramientas matemáticas abstractas a la hora de resolver situaciones que pueden tener un gran beneficio en varios ámbitos, tales como sociales, económicos o medioambientales.
+
+Para ello, nos basaremos en las pautas definidas en @CA a la hora de abordar un problema de clasificación supervisada, esto es:
+
+1. Definir un conjunto de datos sobre los que modelar el problema de clasificación.
+2. Seleccionar un conjunto de \textit{variables predictoras} relevante para el problema.
+3. Tratar incorrecciones o valores faltantes.
+4. Estandarizar variables.
+5. Creación de nuevas variables.
+6. Modelado del problema de clasificación con diferentes algoritmos.
+7. Presentar, visualizar, comparar e interpretar los resultados.
+8. Conclusiones.
+
 
 ## Origen de los datos y variable objetivo
 
@@ -56,7 +76,7 @@ xnew <- "---"
 db <- read.csv("../db/weatherAUS.csv", stringsAsFactors = TRUE)
 db$Date <- as.Date(db$Date, format="%Y-%m-%d")
 attach(db)
-db %>% head() %>%  select(-c(6:19)) %>% add_column(.,rep("---",6),.after = 5) %>% rename(., !!xnew := !!rlang::sym(x)) %>% kbl(., booktabs = T,caption = "Muestra de los datos[note]",) %>% kable_styling(latex_options = c("striped", "scale_down")) 
+db %>% head() %>%  select(-c(6:19)) %>% add_column(.,rep("---",6),.after = 5) %>% rename(., !!xnew := !!rlang::sym(x)) %>% kbl(., booktabs = T,caption = "Muestra de algunas filas y columnas del conjunto de datos") %>% kable_styling(latex_options = c("striped", "scale_down","hold_position")) 
 
 # Voy a descomponer en:
 # - trend
@@ -67,11 +87,43 @@ db %>% head() %>%  select(-c(6:19)) %>% add_column(.,rep("---",6),.after = 5) %>
 # decompose()
 ```
 
-Destacar que hemos importado las variables tipo *string* como *factor*. A continuación, podemos comprobar el tipo de cada variable:
+Destacar que hemos importado las variables tipo *string* como *factor*. A continuación, pod
 
-```{r Tipos de datos}
-# Buscar manera alternativa (representable) de evaluar los tipos de dato.
-str(db)
+```{r Tipos de datos, echo=FALSE}
+# Evaluamos los tipos de dato.
+db_types <- sapply(db,class) %>% as.data.frame()
+colnames(db_types) <- c("Data_types")
+db_types01 <- db_types %>% slice(., 1:floor(nrow(db_types)/2))
+db_types02 <- db_types %>% slice(., ceiling(nrow(db_types)/2):nrow(db_types))
+
+kbl_types01 <- db_types01 %>% kbl(., booktabs = T, caption = "Left") %>% kable_styling(latex_options = c("striped","HOLD_position")
+                                                                          ) 
+
+kbl_types02 <- db_types02 %>% kbl(., booktabs = T, caption = "Right") %>% kable_styling(latex_options = c("striped","HOLD_position")) 
+
+
+
+#knitr::kables(list(db_types01 %>% kable(., booktabs = T,caption = "Left") %>% kable_styling(latex_options = c("striped","HOLD_position"), position="float_left"),
+#                   db_types02 %>% kable(., booktabs = T,caption = "Right") %>% kable_styling(latex_options = c("striped","HOLD_position"),position="float_right"),caption = "Tipo de datos de las variables")) %>% kable_styling(latex_options = c("striped","HOLD_position")) 
+```
+
+```{r, echo=FALSE}
+kbl_types01 <- gsub("\\begin{table}[H]", "\\begin{subtable}[b]{0.48\\linewidth}\n\n", kbl_types01, fixed = TRUE)
+kbl_types01 <- gsub("\\end{table}", "\\end{subtable}", kbl_types01, fixed = TRUE) 
+
+kbl_types02 <- gsub("\\begin{table}[H]", "\\begin{subtable}[b]{0.48\\linewidth}\n", kbl_types02, fixed = TRUE)
+kbl_types02 <- gsub("\\end{table}", "\\end{subtable}", kbl_types02, fixed = TRUE) 
+```
+
+```{r, results = "asis", echo=FALSE}
+cat("",
+    "\\begin{table}[!htb]",
+    "\\centering",
+    kbl_types01,
+    kbl_types02,
+    "\\end{table}",
+    "",
+    sep = "\n") 
 ```
 
 De esta manera, según se refleja en @NADWO, el conjunto de datos con el que vamos a trabajar cuenta con las siguientes variables:
