@@ -12,6 +12,7 @@ header-includes:
 - \usepackage{booktabs}
 - \usepackage{longtable}
 - \usepackage{array}
+- \usepackage{caption}
 - \usepackage{subcaption}
 - \usepackage{multirow}
 - \usepackage{wrapfig}
@@ -41,6 +42,7 @@ library(data.table)
 ```
 
 \listoftables
+\listoffigures
 
 ## Planteamiento del problema a abordar
 
@@ -48,7 +50,7 @@ Nos encontramos con un conjunto de datos obtenidos a partir de mediciones meteor
 
 En la referencia mencionada advierten que el control de calidad aplicado a la captura de estos datos ha sido limitado, por lo que es posible que existan imprecisiones debidas a datos faltantes, valores acumulados tras varios datos faltantes o errores de varios tipos. Es por este motivo que empezaremos nuestro estudio realizando una revisión de la calidad y estructura del dato. Tras este proceso, construiremos una serie de variables que transformarán el problema y la estructura de datos para que puedan aplicarse los modelos de clasificación supervisada planteados.
 
-Partiendo de la base de datos procesada, la segmentaremos para aplicar varios modelados diferentes por cada zona climática^[Desarolladas en el *National Construction Code* por el *Buró de Metereología del Gobierno de Australia*]. Finalmente, compararemos los modelos, los ensamblaremos y presentaremos unos resultados de la precisión del modelo final.
+Partiendo de la base de datos procesada, la segmentaremos para aplicar varios modelados diferentes por cada zona climática\footref{climate01}. Finalmente, compararemos los modelos, los ensamblaremos y presentaremos unos resultados de la precisión del modelo final.
 
 Con esta aplicación práctica de los modelos teóricos abordados en el capítulo anterior buscamos reflejar la capacidad de herramientas matemáticas abstractas a la hora de resolver situaciones que pueden tener un gran beneficio en varios ámbitos, tales como sociales, económicos o medioambientales.
 
@@ -68,7 +70,9 @@ Para ello, nos basaremos en las pautas definidas en @CA a la hora de abordar un 
 
 El buró de metereología australiano coordina una serie de estaciones metereológicas locales repartidas a lo largo del territorio. De esta manera, recopila y reporta datos sobre mediciones meteorológicas. En nuestro caso, tenemos información de 49 ciudades repartida a lo largo de unos 8 años.
 
-```{r echo=FALSE}
+
+
+```{r Tab-1, echo=FALSE}
 
 x <- "rep(\"---\", 6)"
 xnew <- "---"
@@ -87,19 +91,20 @@ db %>% head() %>%  select(-c(6:19)) %>% add_column(.,rep("---",6),.after = 5) %>
 # decompose()
 ```
 
-Destacar que hemos importado las variables tipo *string* como *factor*. A continuación, pod
 
-```{r Tipos de datos, echo=FALSE}
+Destacar que hemos importado las variables tipo *string* como *factor*. En la tabla \ref{tab:Tab-2}, presentamos el tipo de cada variable.
+
+```{r, echo=FALSE}
 # Evaluamos los tipos de dato.
 db_types <- sapply(db,class) %>% as.data.frame()
 colnames(db_types) <- c("Data_types")
 db_types01 <- db_types %>% slice(., 1:floor(nrow(db_types)/2))
 db_types02 <- db_types %>% slice(., ceiling(nrow(db_types)/2):nrow(db_types))
 
-kbl_types01 <- db_types01 %>% kbl(., booktabs = T, caption = "Left") %>% kable_styling(latex_options = c("striped","HOLD_position")
+kbl_types01 <- db_types01 %>% kbl(., booktabs = T, caption = "Tipos de las once primeras variables") %>% kable_styling(latex_options = c("striped","HOLD_position")
                                                                           ) 
 
-kbl_types02 <- db_types02 %>% kbl(., booktabs = T, caption = "Right") %>% kable_styling(latex_options = c("striped","HOLD_position")) 
+kbl_types02 <- db_types02 %>% kbl(., booktabs = T, caption = "Tipos de las doce variables restantes") %>% kable_styling(latex_options = c("striped","HOLD_position")) 
 
 
 
@@ -115,28 +120,30 @@ kbl_types02 <- gsub("\\begin{table}[H]", "\\begin{subtable}[b]{0.48\\linewidth}\
 kbl_types02 <- gsub("\\end{table}", "\\end{subtable}", kbl_types02, fixed = TRUE) 
 ```
 
-```{r, results = "asis", echo=FALSE}
+```{r Tab-2, results = "asis", echo=FALSE}
 cat("",
     "\\begin{table}[!htb]",
     "\\centering",
+    "\\caption{Tipo de datos de las variables}",
     kbl_types01,
     kbl_types02,
+    "\\label{tab:Tab-2}",
     "\\end{table}",
     "",
     sep = "\n") 
 ```
 
-De esta manera, según se refleja en @NADWO, el conjunto de datos con el que vamos a trabajar cuenta con las siguientes variables:
+De esta manera, según se refleja en @NADWO, el conjunto de datos con el que vamos a trabajar cuenta con las siguientes variables.
 
  - *Date*: Fecha en la que se realizó la medición, en formato *AAAA-MM-DD*.
  - *Location*: Localización donde se realizó la medición. 
- - *MinTemp*: Temperatura mínima alcanzada, medida en grados celsius^[En un rango de 24 horas desde las 9am.]. 
- - *MaxTemp*: Temperatura máxima alcanzada, medida en grados celsius^[En un rango de 24 horas desde las 9am.].
- - *Rainfall*: Cantidad total de precipitación, medida en milímetros^[En un rango de 24 horas desde las 9am.]. 
- - *Evaporation*: Evaporación en milímetros sobre un *tanque evaporimétrico clase "A"*^[En un rango de 24 horas desde las 9am.]. 
- - *Sunshine*: Tiempo en horas de alto nivel de luminosidad solar^[En un rango de 24 horas desde las 12am.].
- - *WindGustDir*: Dirección general del viento racheado a lo largo del día^[En un rango de 24 horas desde las 12am.], tomando una de las 16 direcciones posibles del viento.
- - *WindGustSpeed*: Velocidad global del viento racheado a lo largo del día^[En un rango de 24 horas desde las 12am.], medido en kilómetros por hora.
+ - *MinTemp*: Temperatura mínima alcanzada, medida en grados celsius \footnote{\label{hours01}En un rango de 24 horas desde las 9am.}. 
+ - *MaxTemp*: Temperatura máxima alcanzada, medida en grados celsius\footref{hours01}.
+ - *Rainfall*: Cantidad total de precipitación, medida en milímetros\footref{hours01}. 
+ - *Evaporation*: Evaporación en milímetros sobre un *tanque evaporimétrico clase "A"*\footref{hours01}. 
+ - *Sunshine*: Tiempo en horas de alto nivel de luminosidad solar\footnote{\label{hours02}En un rango de 24 horas desde las 12am.}.
+ - *WindGustDir*: Dirección general del viento racheado a lo largo del día\footref{hours02}, tomando una de las 16 direcciones posibles del viento.
+ - *WindGustSpeed*: Velocidad global del viento racheado a lo largo del día\footref{hours02}, medido en kilómetros por hora.
  - *WindDir9am*, *WindDir3pm*: Dirección promedio del viento en los 10 minutos previos a la hora indicada en cada variable.
  - *WindSpeed9am*, *WindSpeed3pm*: Velocidad promedio del viento en los 10 minutos previos a la hora indicada en cada variable, medida en kilómetros por hora.
  - *Humidity9am*, *Humidity3pm*: Humedad relativa, medida en tanto porciento, a las horas indicadas en cada variable.
@@ -144,12 +151,13 @@ De esta manera, según se refleja en @NADWO, el conjunto de datos con el que vam
  - *Cloud9am*, *Cloud3pm*: Fracción del cielo cubierta por nubes a las horas indicadas, medida en *octas de cielo*.
  - *Temp9am*, *Temp3pm*: Temperatura en grados celsius medida a las horas indicadas.
  - *RainToday*, *RainTomorrow*: Variables binarias indicando si ha habido o no lluvia ese día. 
+
  
 De este modo, *RainTomorrow* será nuestra variable objetivo en los clasificadores. Con ello, desarrollaremos estrategias buscando que los modelos puedan decidir lo mejor posible si, dadas las observaciones de un día e información agregada de días anteriores, lloverá o no al día siguiente.
 
 ## Información de los datos y filtrado de datos
 
-A continuación, buscamos comprobar si la serie temporal está completa y sin repetidos para cada valor de la variable *Location*. En la tabla mostrada a continuación, se muestran las variables conteniendo la siguiente información:
+A continuación, buscamos comprobar si la serie temporal está completa y sin repetidos para cada valor de la variable *Location*. En la tabla \ref{tab:Tab-3}, se muestran las variables conteniendo la siguiente información.
 
  - *min_fec*, *max_fec*: Fecha donde comienzan y terminan los datos en la serie temporal.
  - *obs*: Número de observaciones total en cada serie temporal.
@@ -159,7 +167,7 @@ A continuación, buscamos comprobar si la serie temporal está completa y sin re
  - *range_free*: Cantidad de datos sin fechas faltates medidos hacia atrás desde el último registro. Es decir, longitud de la serie temporal continua más reciente.
  - *range*: Rango, medido en dias, de la serie temporal. Esto es, número de días entre *max_fec* y *min_fec*.
 
-```{r Rangos de fechas, echo=FALSE}
+```{r Tab-3, echo=FALSE}
 
 # Creamos función que comprueba rango de fechas
 
@@ -216,29 +224,29 @@ date_range <- function(){
   return(dates_df)
 }
 dates_df <- date_range()
-dates_df %>% View()
+dates_df %>% kbl(., booktabs = T, caption = "Continuidad de las series temporales") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
 
 ```
 
 Como podemos observar en el análisis anterior, vemos que la localización *NorahHead* tiene el último hueco en su serie temporal el *2013-12-31*. Es por este motivo que vamos a filtrar a partir de este valor con el fin de asegurarnos que no existan fechas faltantes dentro de las series temporales.
-Se puede observar además que el resto de localizaciones tienen como último salto en su serie temporal la fecha *2013-02-28*, y que las localizaciones de *Katherine*, *Nhil* y *Uluru* comienzan su serie temporal el *2013-03-01*. Esto es, que cuando comenzó a haber registros en estastres localizaciones dejó de haber errores de grabado de datos en la serie temporal en el resto de localizaciones (salvo en *NorahHead*). Este suceso dentro del proceso de grabación de datos podría ser indicativo de una reestructuración de los mecanismos de captación de los datos climáticos por parte del buró de meteorología australiano. 
+Se puede observar además que el resto de localizaciones tienen como último salto en su serie temporal la fecha *2013-02-28*, y que las localizaciones de *Katherine*, *Nhil* y *Uluru* comienzan su serie temporal el *2013-03-01*. Esto es, que cuando comenzó a haber registros en estas tres localizaciones dejó de haber errores de grabado de datos en la serie temporal en el resto de localizaciones (salvo en *NorahHead*). Este suceso dentro del proceso de grabación de datos podría ser indicativo de una reestructuración de los mecanismos de captación de los datos climáticos por parte del buró de meteorología australiano. 
 
-A continuación, filtrando sobre la fecha mencionada se puede observar que ya no existen discontinuidades en ninguna serie temporal:
+Finalmente, filtrando desde el *2013-12-31* hasta el *2017-06-24*, que es el último dato registrado en todas las series, se puede observar en la tabla \ref{tab:Tab-4} que ya no existen discontinuidades en ninguna serie temporal.
 
-```{r Filtramos por fecha mayor a 2013-12-31 y menor a 2017-06-24}
+```{r Tab-4, echo=FALSE}
 
 # Rango de a 2013-12-31 y menor a 2017-06-24
 db <- db %>% filter(.,Date>as.Date("2013-12-31") & Date<=as.Date("2017-06-24"))
 
 # Comprobamos datos limpios
 dates_df <- date_range()
-dates_df %>% View()
+dates_df %>% slice(., 1:12) %>% kbl(., booktabs = T, caption = "Series temporales desde el 2014-01-01 hasta el 2017-06-24") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
 
 ```
 
 ## Agrupación por zona climática
  
-Con el objetivo de modelar con mayor precisión los datos, vamos a realizar una segmentación de la información asignando la zona climática^[Desarolladas en el *National Construction Code* por el *Buró de Metereología del Gobierno de Australia*] a la que pertenece cada localización. Estas zonas están descritas de la siguiente manera:
+Con el objetivo de modelar con mayor precisión los datos, vamos a realizar una segmentación de la información asignando la zona climática\footnote{\label{climate01}Desarolladas en el National Construction Code por el Buró de Metereología del Gobierno de Australia.} a la que pertenece cada localización. Estas zonas, representadas en la figura \ref{fig:Fig-01}, están descritas de la siguiente manera.
 
  - *Zona 1*: Veranos húmedos y cálidos, con inviernos cálidos.
  - *Zona 2*: Veranos húmedos y templados, con inviernos suaves.
@@ -250,7 +258,13 @@ Con el objetivo de modelar con mayor precisión los datos, vamos a realizar una 
  - *Zona 8*: Clima alpino.
 
 
-```{r Agrupamos por zonas climáticas}
+```{r Fig-01, out.width="75%", echo=FALSE, fig.cap="\\centering Mapa de las zonas climáticas de Australia - \\footnotesize{Fuente: Australian Building Codes Board}",fig.align='center'}
+url <- "../pics/PD_Design_Climate_2.png"
+knitr::include_graphics(url)
+# Mapa de las zonas climáticas de Australia  - \\newline{} \\footnotesize{Fuente: Australian Building Codes Board}
+```
+
+```{r Agrupamos por zonas climáticas, echo=FALSE}
 
 # Creamos vectores de zonas climáticas
 zona1 <- c("Exmouth", "Dampier", "PortHedland", "Broome", "Derby", "Wyndham", "TimberCreek", "Katherine","Darwin", "Oenpelli", "Borroloola", "Nhulunbuy","Burketown", "Weipa", "Cooktown", "Cairns", "Townsville")
@@ -298,15 +312,15 @@ for(city in levels(db$Location)){
 
 # Creamos dataframe de zonas climáticas
 zonas_climaticas <- data.frame(levels(db$Location),zona_climatica) %>% rename(Location=levels.db.Location.)
-zonas_climaticas %>% View()
+#zonas_climaticas %>% View()
 
 ```
 
-Una estrategia alternativa que planteamos como propuesta de mejora en este punto consistiría en realizar un clustering no supervisado, de manera que se segmenten los datos en 8 categorías no equitativas. A continuación, compararíamos esta categorización no supervisada contra la categorización por zona climática para comprobar la similitud de ambas asignaciones.
+Una estrategia alternativa que planteamos como propuesta de mejora en este punto consistiría en realizar un clustering no supervisado, de manera que se segmenten las localizaciones en 8 categorías no equitativas. A continuación, compararíamos esta categorización no supervisada contra la categorización por zona climática para comprobar la similitud de ambas asignaciones.
 
-En cualquier caso, en el planteamiento que proponemos hemos eliminado aquellas localizaciones donde no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado *NorfolkIsland*, *Portland*, *Richmond*, *Walpole* y *Williamtown*. Mostramos observaciones por zona climática.
+En cualquier caso, en el planteamiento que proponemos hemos eliminado aquellas localizaciones donde no ha sido posible determinar la zona climática a la que pertenecen. En concreto, se han eliminado *NorfolkIsland*, *Portland*, *Richmond*, *Walpole* y *Williamtown*. A continuación se presentan en la tabla \ref{tab:Tab-5} la cantidad total de observaciones junto con la cantidad de ciudades por cada zona climática.
 
-```{r Información por zona climática}
+```{r Tab-5, echo=FALSE}
 
 # Añadimos las zonas climáticas
 
@@ -319,25 +333,28 @@ db <- droplevels(db)
 #db$zona_climatica <- db$zona_climatica %>% as.factor()
 
 # Contamos valores totales por zona climática:
-db %>% count(zona_climatica) %>% View()
+#db %>% count(zona_climatica,name = "n_obs") %>% View()
 
 # Contamos cantidad de ciudades por zona climática
-db %>% count(zona_climatica,Location) %>%count(zona_climatica,name="n_locations") %>%  View()
+#db %>% count(zona_climatica,Location) %>%count(zona_climatica,name="n_locations") %>%  View()
 
 # Comprobamos datos continuos
-db %>% count(zona_climatica,Location) %>% View() # esto confirma que tenemos 1272 datos para cada ciudad
-dates_df <- date_range()
-dates_df %>% View()
+# db %>% count(zona_climatica,Location) %>% View() # esto confirma que tenemos 1272 datos para cada ciudad
 
+# Todo a la vez:
+climate_zones_db <- db %>% count(zona_climatica,name = "n_obs") %>% left_join(.,db %>% count(zona_climatica,Location) %>%count(zona_climatica,name="n_locations"), by="zona_climatica",strings) %>% select(.,-c(zona_climatica))
+
+rownames(climate_zones_db) <- c("Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6","Zona 7","Zona 8")
+
+climate_zones_db %>% kbl(., booktabs = T,caption = "Cantidad de observaciones y localizaciones por zona climática") %>% kable_styling(latex_options = c("striped","hold_position"))
 
 ```
 
 
-## División y limpiado de los datos
+Llegados a este punto, estamos en disposición de crear un conjunto de datos para cada zona climática, a los cuales someteremos a una limpieza y procesado de datos. Es importante aplicar este procedimiento por separado para cada zona climática ya que, entre otras técnicas, imputaremos datos faltantes. Por tanto, es necesario que la información con la que sustituimos estos valores sea coherente con la subdivisión por zonas climáticas del conjunto de datos original. 
+Finalmente, tenemos el conjunto de datos segmentado en 8 zonas disjuntas, que abordaremos y modelaremos en paralelo.
 
-Ahora si, estamos en disposición de crear un conjunto de datos para cada zona climática, a los cuales someteremos a una limpieza y procesado de datos. Es importante aplicar este procedimiento por separado para cada zona climática ya que imputaremos datos faltantes entre otras técnicas, para lo cual nos interesa que la información con la que sustituimos estos valores sea coherente con la subdivisión del conjunto de datos original.
-
-```{r}
+```{r echo=FALSE}
 
 db_zone1 <- db %>% filter(., zona_climatica == 1) %>% select(., -zona_climatica)
 db_zone1 <- droplevels(db_zone1)
@@ -364,14 +381,13 @@ zonas <- list("zona1"=db_zone1,
            "zona6"=db_zone6,
            "zona7"=db_zone7,
            "zona8"=db_zone8)
-print(nrow(db) == (nrow(db_zone1) + nrow(db_zone2) + nrow(db_zone3) + nrow(db_zone4) + nrow(db_zone5) + nrow(db_zone6) + nrow(db_zone7) + nrow(db_zone8)))
+#print(nrow(db) == (nrow(db_zone1) + nrow(db_zone2) + nrow(db_zone3) + nrow(db_zone4) + nrow(db_zone5) + nrow(db_zone6) + nrow(db_zone7) + nrow(db_zone8)))
 
 
 ```
 
-Tenemos por tanto el conjunto de datos segmentado en 8 zonas disjuntas, que abordaremos y modelaremos en paralelo.
 
-### Calidad del dato
+### Calidad y limpieza de los datos
 
 A continuación, nos disponemos a tratar los aspectos relativos a la calidad del dato. Esto es, tratamiento de valores faltates o *missings*, valores atípicos o *outliers*, normalización de los datos y balanceo de los datos.
 
@@ -404,7 +420,7 @@ get_missings <- function(){
   
 }
 df_missings <- get_missings()
-df_missings %>% View()
+# df_missings %>% View()
 
 ```
 
@@ -470,7 +486,7 @@ for(i in 1:length(zonas)){
 }
 
 df_missings <- get_missings()
-df_missings %>% View()
+# df_missings %>% View()
 
 ```
 
@@ -523,7 +539,7 @@ Las variables categóricas que disponemos son *Location*, *WindGustDir*, *WindDi
 dmy <- dummyVars( ~ +Location+RainToday+RainTomorrow, data = zonas[[1]])
 trsf <- data.frame(predict(dmy, newdata = zonas[[1]]))
 zonas[[1]] <- zonas[[1]] %>% select(., -any_of(c("Location","RainToday","RainTomorrow"))) %>% cbind(.,trsf)
-zonas[[1]] %>% head() %>% View()
+# zonas[[1]] %>% head() %>% View()
 ```
 
 De esta manera, tras el proceso de *one hot encoding*, explotamos cada variable categórica con *n* niveles en *n* variables binarias.
@@ -538,7 +554,7 @@ radianes <- list("E"=0,"ENE"=pi/8, "NE"=pi/4, "NNE"=3*pi/8,
                  "W"=pi,"WSW"=9*pi/8,"SW"=5*pi/4,"SSW"=11*pi/8,
                  "S"=3*pi/2,"SSE"=13*pi/8,"SE"=7*pi/4,"ESE"=15*pi/8)
 
-zonas[[1]] %>% transform(., WindGustDir=radianes[as.character(zonas[[1]]$WindGustDir)]) %>% head() %>% View()
+#zonas[[1]] %>% transform(., WindGustDir=radianes[as.character(zonas[[1]]$WindGustDir)]) %>% head() %>% View()
 
 
 
@@ -561,7 +577,7 @@ RESUMEN DE TODO:
 
 
 
-**Con las numéricas normalizamos y hacemos el step* y con las categóricas hacemos PCA
+**Con las numéricas normalizamos y hacemos el step* y con las categóricas hacemos PCA   
 
 Factorial Analysis of Mixed Data (FAMD)
 
