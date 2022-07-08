@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.7.7)  8 JUL 2022 15:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.7.7)  8 JUL 2022 22:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -651,11 +651,8 @@ LaTeX Info: Redefining \% on input line 1.
 \tf@lof=\write7
 \openout7 = `Analisis-y-modelado-de-datos.lof'.
 
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
 [2] [3] [4] [5]
-<../pics/PD_Design_Climate_2.png, id=175, 3018.27625pt x 2094.82625pt>
+<../pics/PD_Design_Climate_2.png, id=183, 3018.27625pt x 2094.82625pt>
 File: ../pics/PD_Design_Climate_2.png Graphic file (type png)
 <use ../pics/PD_Design_Climate_2.png>
 Package pdftex.def Info: ../pics/PD_Design_Climate_2.png  used on input line 627.
@@ -664,42 +661,42 @@ Package pdftex.def Info: ../pics/PD_Design_Climate_2.png  used on input line 627
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 [6] [7 <../pics/PD_Design_Climate_2.png (PNG copy)>] [8]
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf, id=199, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf, id=207, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf  used on input line 829.
 (pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf, id=200, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf, id=208, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf  used on input line 838.
 (pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf, id=201, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf, id=209, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf  used on input line 847.
 (pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf, id=202, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf, id=210, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf  used on input line 856.
 (pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf, id=203, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf, id=211, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf  used on input line 865.
 (pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf, id=204, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf, id=212, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf  used on input line 874.
 (pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf, id=205, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf, id=213, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf  used on input line 883.
 (pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
-<Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf, id=206, 469.755pt x 325.215pt>
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf, id=214, 469.755pt x 325.215pt>
 File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf Graphic file (type pdf)
 <use Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf>
 Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf  used on input line 892.
@@ -707,7 +704,13 @@ Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 909.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [9 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf>] [10 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf>] [11 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf>] [12 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf>] [13 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf>] [14] [15] (./Analisis-y-modelado-de-datos.aux
+) [9 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf>] [10 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf>] [11 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf>] [12 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf>] [13 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf>]
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-10-1.pdf, id=275, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-10-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-10-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-10-1.pdf  used on input line 987.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+[14 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-10-1.pdf>] [15] [16] (./Analisis-y-modelado-de-datos.aux
 LaTeX Info: Redefining \. on input line 22.
 LaTeX Info: Redefining \% on input line 22.
 )
@@ -715,21 +718,21 @@ LaTeX Info: Redefining \% on input line 22.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `Analisis-y-modelado-de-datos.out' has not changed.
-(rerunfilecheck)             Checksum: 524E142A89AEEB1930DF0F27665CECA9;2903.
+(rerunfilecheck)             Checksum: 1C7B82B946459DAA881DAEC7D06645B5;2954.
  ) 
 Here is how much of TeX's memory you used:
- 15820 strings out of 479966
- 258528 string characters out of 5887130
- 609279 words of memory out of 5000000
- 33641 multiletter control sequences out of 15000+600000
- 531520 words of font info for 74 fonts, out of 8000000 for 9000
+ 15835 strings out of 479966
+ 259148 string characters out of 5887130
+ 609504 words of memory out of 5000000
+ 33651 multiletter control sequences out of 15000+600000
+ 531201 words of font info for 73 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 72i,11n,77p,540b,770s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtti10.pfb>
-Output written on Analisis-y-modelado-de-datos.pdf (15 pages, 982750 bytes).
+ 72i,11n,77p,588b,770s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
+Output written on Analisis-y-modelado-de-datos.pdf (16 pages, 1043538 bytes).
 PDF statistics:
- 362 PDF objects out of 1000 (max. 8388607)
- 293 compressed objects within 3 object streams
- 90 named destinations out of 1000 (max. 500000)
- 158 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 398 PDF objects out of 1000 (max. 8388607)
+ 321 compressed objects within 4 object streams
+ 95 named destinations out of 1000 (max. 500000)
+ 163 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -672,25 +672,56 @@ Debido a la naturaleza caótica del tiempo, no vamos a tratar los outliers como 
 
 No obstante, si que es posible en este punto estimar qué variables van a ser más relevantes para los modelos en cada zona. En aquellas variables en donde exista una gran diferencia visual entre el caso `RainTomorrow=YES` y el caso `RainTomorrow=NO` tendremos que las variables aleatorias subyacentes en estos casos son diferentes, y por tanto aportarán más información al modelo. De este modo, estas variables son `WindGustSpeed`, `WindGustSpeed9am`, `MinTemp`, `WindGustSpeed`, `Humidity9am` y `Humidity3pm`, dependiendo de si nos encontramos en una u otra zona climática.
 
+Finalmente, en la tabla \ref{tab:Tab-9} comprobamos si la variable `RainTomorrow` tiene categorías balanceadas en caza zona. Se puede observar que existe cierta desproporción ya que hay valores inferiores al $30%$ de casos de lluvia en todas las zonas, especialmente la zona 3 con sólamente un $7%$ de valores positivos. Si tras un primer modelado no consiguiéramos unos resultados satisfactorios, una técnica que podría aplicarse, conocida como *downsampling*, consiste en seleccionar un subconjunto de entrenamiento donde los casos de la variable objetivo estén más proporcionados.
+
+```{r Tab-9, echo=FALSE}
+
+perct_rain_tomorrow <- c()
+
+for(i in 1:length(zonas)){
+  perct_rain_tomorrow <- c(perct_rain_tomorrow,(table(zonas[[i]]$RainTomorrow)[['Yes']])*100/nrow(zonas[[i]]))
+}
+prain_df <- data.frame(perct_rain_tomorrow,row.names = c("Zona1", "Zona2", "Zona3", "Zona4", "Zona5", "Zona6", "Zona7", "Zona8"))
+
+prain_df %>% kbl(., booktabs = T, caption = "Índice de lluvia por zona climática") %>%kable_styling(latex_options = c("striped","hold_position"))
+
+```
+
+
 ### Transformación de las variables categóricas
 
-Las variables categóricas que disponemos son *Location*, *WindGustDir*, *WindDir9am*, *WindDir3pm*, *RainToday* y *RainTomorrow*. Para *Location*,*RainToday* y *RainTomorrow* vamos a aplicar técnicas de one hot encoding con las que transformaremos estas variables en numéricas. Por otro lado, para las variables categóricas relativas a la dirección del viento, vamos a aplicar una transformación de forma que combinemos esta información con las variables enteras relativas a la intensidad del viento, obteniendo dos variables numéricas que expresan el valor del coseno y del seno del vector viento.
+Las variables categóricas que disponemos son *Location*, *WindGustDir*, *WindDir9am*, *WindDir3pm*, *RainToday* y *RainTomorrow*. Para la variable *Location* vamos a aplicar técnicas de one hot encoding con las que transformaremos estas variables en numéricas. Las variables *RainToday* y *RainTomorrow* por ser binarias no necesitan ninguna transformación más que cambiar su tipo de `TRUE` y `FALSE` a unos y ceros (tipo numérico). Por otro lado, para las variables categóricas relativas a la dirección del viento, vamos a aplicar una transformación de forma que combinemos esta información con las variables enteras relativas a la intensidad del viento, obteniendo dos variables numéricas que expresan el valor del coseno y del seno del vector viento.
 
 
-```{r Transformación de variables categóricas}
+```{r Transformación de variables categóricas, echo=FALSE}
 
 # Iterar por zonas
-dmy <- dummyVars( ~ +Location+RainToday+RainTomorrow, data = zonas[[1]])
-trsf <- data.frame(predict(dmy, newdata = zonas[[1]]))
-zonas[[1]] <- zonas[[1]] %>% select(., -any_of(c("Location","RainToday","RainTomorrow"))) %>% cbind(.,trsf)
+for(i in 1:(length(zonas)-1)){
+  dmy <- dummyVars( ~ +Location, data = zonas[[i]])
+  trsf <- data.frame(predict(dmy, newdata = zonas[[i]]))
+  zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("Location"))) %>% cbind(.,trsf)
+  zonas[[i]][,c("RainToday","RainTomorrow")] <- lapply(zonas[[i]][,c("RainToday","RainTomorrow")],function(x) as.numeric(x)-1) %>% as.data.frame() 
+}
+
+zonas[[8]] <- zonas[[8]] %>% select(., -any_of(c("Location"))) 
+zonas[[8]][,c("RainToday","RainTomorrow")] <- lapply(zonas[[8]][,c("RainToday","RainTomorrow")],function(x) as.numeric(x)-1) %>% as.data.frame() 
 # zonas[[1]] %>% head() %>% View()
 ```
 
-De esta manera, tras el proceso de *one hot encoding*, explotamos cada variable categórica con *n* niveles en *n* variables binarias.
+Del proceso de *one hot encoding* podemos estacar que en la zona 8 se ha eliminado la variable `Location` ya que esta sólamente tenía un único valor, por lo que no aporta información al modelado para esta zona. Además, se han creado variables numéricas del tipo `Location.Katherine` que indican si la observación pertenece o no a dicha localización. De esta manera, tras el proceso de *one hot encoding*, explotamos cada variable categórica con *n* niveles en *n* variables binarias, conocidas como *dummy variables*.
 
-Finalmente, asignamos un valor en radianes a cada dirección del viento, calculamos el coseno y el seno de dicha dirección y los multiplicamos por la variable respectiva de intensidad del viento.
+Tras el tratamiento de esas variables categóricas, vamos a asignar un valor en radianes a cada dirección del viento según se muestran en la figura \ref{fig:Fig-10}^[Fuente - @QRSAUAQ], para después calcular el coseno y el seno de dicha dirección y multiplicar ambos por la variable respectiva de intensidad del viento. Con esta transformación, condensamos todas las variables relativas a la dirección e intensidad del viento en la coordenada $x$ e $y$ del vector viento.
 
-```{r Transformación de variables de viento}
+
+```{r Fig-10,echo=FALSE,fig.cap="16 direcciones del viento", message=FALSE,results='hide',out.height="40%",fig.align = 'center'}
+
+p <- ggdraw() +draw_image(paste0("../pics/Classification-of-wind-directions.png"))
+p
+
+```
+
+
+```{r Tab-10, echo=FALSE}
 
 
 radianes <- list("E"=0,"ENE"=pi/8, "NE"=pi/4, "NNE"=3*pi/8, 
@@ -698,19 +729,68 @@ radianes <- list("E"=0,"ENE"=pi/8, "NE"=pi/4, "NNE"=3*pi/8,
                  "W"=pi,"WSW"=9*pi/8,"SW"=5*pi/4,"SSW"=11*pi/8,
                  "S"=3*pi/2,"SSE"=13*pi/8,"SE"=7*pi/4,"ESE"=15*pi/8)
 
-#zonas[[1]] %>% transform(., WindGustDir=radianes[as.character(zonas[[1]]$WindGustDir)]) %>% head() %>% View()
+for(i in 1:length(zonas)){ # transformamos en ángulos
+  zonas[[i]] <- zonas[[i]] %>% transform(., WindGustDir=radianes[as.character(zonas[[i]]$WindGustDir)])
+  zonas[[i]]<-zonas[[i]] %>% mutate(., WindGustDir_x=lapply(zonas[[i]]$WindGustDir,cos)) #componente x
+  zonas[[i]]<-zonas[[i]] %>% mutate(., WindGustDir_y=lapply(zonas[[i]]$WindGustDir,sin)) #componente y
+  
+  zonas[[i]] <- zonas[[i]] %>% transform(., WindDir9am=radianes[as.character(zonas[[i]]$WindDir9am)])
+  zonas[[i]] <- zonas[[i]] %>% mutate(., WindDir9am_x=lapply(zonas[[i]]$WindDir9am,cos)) #componente x
+  zonas[[i]] <- zonas[[i]] %>% mutate(., WindDir9am_y=lapply(zonas[[i]]$WindDir9am,sin)) #componente y
+  
+  zonas[[i]] <- zonas[[i]] %>% transform(., WindDir3pm=radianes[as.character(zonas[[i]]$WindDir3pm)])
+  zonas[[i]] <- zonas[[i]] %>% mutate(., WindDir3pm_x=lapply(zonas[[i]]$WindDir3pm,cos)) #componente x
+  zonas[[i]] <- zonas[[i]] %>% mutate(., WindDir3pm_y=lapply(zonas[[i]]$WindDir3pm,sin)) #componente y
+  zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("WindGustDir","WindDir9am","WindDir3pm")))
+  
+  new_vars <- c("WindGustDir_x","WindGustDir_y","WindDir9am_x","WindDir9am_y","WindDir3pm_x","WindDir3pm_y")
+  
+  zonas[[i]][,new_vars] <- lapply(zonas[[i]][,new_vars],as.numeric) %>% as.data.frame()
+  
+  # Las multiplicamos por la intensidad respectiva del viento:
+  # 
+  zonas[[i]] <- zonas[[i]] %>% rowwise() %>% mutate(., WindGustDir_x=WindGustDir_x * WindGustSpeed)
+  zonas[[i]] <- zonas[[i]] %>% rowwise() %>% mutate(., WindDir9am_x=WindDir9am_x * WindSpeed9am)
+  zonas[[i]] <- zonas[[i]] %>% rowwise() %>% mutate(., WindDir3pm_x=WindDir3pm_x * WindSpeed3pm)
+  
+  zonas[[i]] <- zonas[[i]] %>% rowwise() %>% mutate(., WindGustDir_y=WindGustDir_y * WindGustSpeed)
+  zonas[[i]] <- zonas[[i]] %>% rowwise() %>% mutate(., WindDir9am_y=WindDir9am_y * WindSpeed9am)
+  zonas[[i]] <- zonas[[i]] %>% rowwise() %>% mutate(., WindDir3pm_y=WindDir3pm_y * WindSpeed3pm)
+ 
+  zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("WindGustSpeed","WindSpeed9am","WindSpeed3pm"))) 
+}
 
+
+
+zonas[[i]] %>% head() %>% kbl(., booktabs = T, caption = "Conversión de variables de viento") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
 
 
 
 ```
 
+Con este proceso, hemos transformado las variables categóricas `WindGustDir`, `WindDir9am` y `WindDir3pm` en dos componentes numéricas, combinándolas respectivamente con `WindGustSpeed`, `WindSpeed9am` y `WindSpeed3pm`.
+
+### Normalización de datos.
+
+Como útima etapa del tratamiento de datos, nos disponemos a aplicar una normalización estándar sobre las variables numéricas que disponemos que no sean tipo *one hot*. El objetivo de este proceso es que todas tengan el mismo peso en la etapa de modelado, además de ser clave ya que vamos a trabajar con modelos basados en distancias. Vemos en la tabla \ref{tab:Tab-11} como el valor de todas las variables numéricas ha pasado a estar entre $-1$ y $1$, salvo las de tipo *one hot* que mantendremos en $[0,1]$.
+
+```{r Tab-11, echo=FALSE}
 
 
-#### Normalización de datos.
+
+for(i in 1:length(zonas)){
+  columnas_numericas <- zonas[[i]][, unlist(lapply(zonas[[i]], is.numeric), use.names = FALSE) ] %>% colnames()
+  locations <- grep("^Location.[a-zA-Z0-9]*", columnas_numericas, value = TRUE) 
+  columnas_numericas <- columnas_numericas[! columnas_numericas %in% c(locations,"RainToday","RainTomorrow")]
+  zonas[[i]][,columnas_numericas] <- lapply(zonas[[i]][,columnas_numericas],function(x) (x-mean(x))/(sd(x))) %>% as.data.frame()
+}
 
 
-justificar la normalización. Bien para el modelado, bien para el FS
+columnas_numericas <- zonas[[3]][, unlist(lapply(zonas[[3]], is.numeric), use.names = FALSE) ] %>% colnames()
+zonas[[3]] %>% head() %>% kbl(., booktabs = T, caption = "Variables normalizadas a 0-1 -- Zona 3") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+
+```
+
 
 ## Eliminación de variables y representación de los datos
 
@@ -739,12 +819,6 @@ slm1$anova
 ```
 
 
-
-### Representación
-
-Distribuciones (histogramas)
-
-Comprobar la proporción de dias que llueve vs dias que no por zona (rain_ratio)
 
 ## Creación de nuevas variables ventana para trend y seasonality
 
