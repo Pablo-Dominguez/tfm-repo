@@ -10,6 +10,7 @@ output:
 bibliography: references.bib  
 header-includes:
 - \usepackage{booktabs}
+- \usepackage{graphicx}
 - \usepackage{longtable}
 - \usepackage{array}
 - \usepackage{caption}
@@ -39,6 +40,7 @@ library(FactoMineR)
 library(factoextra)
 library(mltools)
 library(data.table)
+library(cowplot)
 ```
 
 \listoftables
@@ -79,6 +81,8 @@ xnew <- "---"
 
 db <- read.csv("../db/weatherAUS.csv", stringsAsFactors = TRUE)
 db$Date <- as.Date(db$Date, format="%Y-%m-%d")
+columnas_enteras <- db[, unlist(lapply(db, is.integer), use.names = FALSE) ] %>% colnames()
+db[,columnas_enteras] <- db[,columnas_enteras] %>% sapply(.,as.numeric)
 attach(db)
 db %>% head() %>%  select(-c(6:19)) %>% add_column(.,rep("---",6),.after = 5) %>% rename(., !!xnew := !!rlang::sym(x)) %>% kbl(., booktabs = T,caption = "Muestra de algunas filas y columnas del conjunto de datos") %>% kable_styling(latex_options = c("striped", "scale_down","hold_position")) 
 
@@ -157,7 +161,7 @@ De este modo, *RainTomorrow* será nuestra variable objetivo en los clasificador
 
 ## Información de los datos y filtrado de datos
 
-A continuación, buscamos comprobar si la serie temporal está completa y sin repetidos para cada valor de la variable *Location*. En la tabla \ref{tab:Tab-3}, se muestran las variables conteniendo la siguiente información.
+A continuación, buscamos comprobar si la serie temporal está completa y sin días repetidos para cada valor de la variable *Location*. En la tabla \ref{tab:Tab-3}, se muestran las variables conteniendo la siguiente información.
 
  - *min_fec*, *max_fec*: Fecha donde comienzan y terminan los datos en la serie temporal.
  - *obs*: Número de observaciones total en cada serie temporal.
@@ -167,7 +171,7 @@ A continuación, buscamos comprobar si la serie temporal está completa y sin re
  - *range_free*: Cantidad de datos sin fechas faltates medidos hacia atrás desde el último registro. Es decir, longitud de la serie temporal continua más reciente.
  - *range*: Rango, medido en dias, de la serie temporal. Esto es, número de días entre *max_fec* y *min_fec*.
 
-```{r Tab-3, echo=FALSE}
+```{r  Tab-3, echo=FALSE}
 
 # Creamos función que comprueba rango de fechas
 
@@ -224,9 +228,41 @@ date_range <- function(){
   return(dates_df)
 }
 dates_df <- date_range()
-dates_df %>% kbl(., booktabs = T, caption = "Continuidad de las series temporales") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+
+df_dates01 <- dates_df[1:7,]
+df_dates02 <- dates_df[8:14,]
+df_dates03 <- dates_df[15:21,]
+df_dates04 <- dates_df[22:28,]
+df_dates05 <- dates_df[29:35,]
+df_dates06 <- dates_df[36:42,]
+df_dates07 <- dates_df[43:49,]
+
+
+df_dates01 <- df_dates01 %>% kbl(., booktabs = T , align = "c", caption = "Continuidad de las series temporales") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+df_dates02 <- df_dates02 %>% kbl(., booktabs = T,col.names = NULL,align = "c") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+df_dates03 <- df_dates03 %>% kbl(., booktabs = T,col.names = NULL,align = "c") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+df_dates04 <- df_dates04 %>% kbl(., booktabs = T,col.names = NULL,align = "c") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+df_dates05 <- df_dates05 %>% kbl(., booktabs = T,col.names = NULL,align = "c") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+df_dates06 <- df_dates06 %>% kbl(., booktabs = T,col.names = NULL,align = "c") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+df_dates07 <- df_dates07 %>% kbl(., booktabs = T,col.names = NULL,align = "c") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+
+
+#dates_df %>% kbl(., booktabs = T , caption = "Continuidad de las series temporales") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"), repeat_header_continued=T)
 
 ```
+
+```{r,echo=FALSE}
+
+df_dates01
+df_dates02
+df_dates03
+df_dates04
+df_dates05
+df_dates06
+df_dates07
+
+```
+
 
 Como podemos observar en el análisis anterior, vemos que la localización *NorahHead* tiene el último hueco en su serie temporal el *2013-12-31*. Es por este motivo que vamos a filtrar a partir de este valor con el fin de asegurarnos que no existan fechas faltantes dentro de las series temporales.
 Se puede observar además que el resto de localizaciones tienen como último salto en su serie temporal la fecha *2013-02-28*, y que las localizaciones de *Katherine*, *Nhil* y *Uluru* comienzan su serie temporal el *2013-03-01*. Esto es, que cuando comenzó a haber registros en estas tres localizaciones dejó de haber errores de grabado de datos en la serie temporal en el resto de localizaciones (salvo en *NorahHead*). Este suceso dentro del proceso de grabación de datos podría ser indicativo de una reestructuración de los mecanismos de captación de los datos climáticos por parte del buró de meteorología australiano. 
@@ -240,7 +276,7 @@ db <- db %>% filter(.,Date>as.Date("2013-12-31") & Date<=as.Date("2017-06-24"))
 
 # Comprobamos datos limpios
 dates_df <- date_range()
-dates_df %>% slice(., 1:12) %>% kbl(., booktabs = T, caption = "Series temporales desde el 2014-01-01 hasta el 2017-06-24") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+dates_df %>% slice(., 1:12) %>% kbl(., booktabs = T, caption = "Muestra de series temporales desde el 2014-01-01 hasta el 2017-06-24") %>% kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
 
 ```
 
@@ -258,7 +294,7 @@ Con el objetivo de modelar con mayor precisión los datos, vamos a realizar una 
  - *Zona 8*: Clima alpino.
 
 
-```{r Fig-01, out.width="75%", echo=FALSE, fig.cap="\\centering Mapa de las zonas climáticas de Australia - \\footnotesize{Fuente: Australian Building Codes Board}",fig.align='center'}
+```{r Fig-01, out.width="90%", echo=FALSE, fig.cap="\\centering Mapa de las zonas climáticas de Australia - \\footnotesize{Fuente: Australian Building Codes Board}",fig.align='center'}
 url <- "../pics/PD_Design_Climate_2.png"
 knitr::include_graphics(url)
 # Mapa de las zonas climáticas de Australia  - \\newline{} \\footnotesize{Fuente: Australian Building Codes Board}
@@ -387,27 +423,24 @@ zonas <- list("zona1"=db_zone1,
 ```
 
 
-### Calidad y limpieza de los datos
+## Calidad y limpieza de los datos
 
-A continuación, nos disponemos a tratar los aspectos relativos a la calidad del dato. Esto es, tratamiento de valores faltates o *missings*, valores atípicos o *outliers*, normalización de los datos y balanceo de los datos.
+A continuación, nos disponemos a tratar los aspectos relativos a la calidad del dato. Esto es, tratamiento de valores faltates o *missings*, valores atípicos u *outliers*, normalización de los datos y balanceo de los datos.
 
-#### Missings
+### Missings
 
-En la tabla que se muestra abajo se refleja el porcentaje en tanto por ciento de valores faltantes en cada variable por zona climática.
+En la tabla \ref{tab:Tab-6} que se muestra abajo se refleja el porcentaje en tanto por ciento de valores faltantes en cada variable por zona climática.
 
-```{r Detect missings}
+```{r Tab-6, echo=FALSE, warning=FALSE}
 
 # Crear función de comprobar missings
 # counting missing values
 get_missings <- function(){
   df_missings <- NULL;
-  total_rows <- c()
   for(i in 1:length(zonas)){
     row <- zonas[[i]] %>% select(everything()) %>% summarise_all(funs(sum(is.na(.))))*100 / nrow(zonas[[i]])
-    total_rows <- c(total_rows,nrow(zonas[[i]]))
     df_missings <- df_missings %>% rbind(.,row)
   }
-  df_missings["Total obs"] <- total_rows
   rownames(df_missings) <- c("zona1",
                               "zona2",
                               "zona3",
@@ -421,29 +454,42 @@ get_missings <- function(){
 }
 df_missings <- get_missings()
 # df_missings %>% View()
+# 
+df_missings01 <- df_missings[,1:8]
+df_missings02 <- df_missings[,9:15]
+df_missings03 <- df_missings[,16:23]
+
+df_missings01 <- df_missings01 %>% kbl(., booktabs = T, caption = "Porcentaje de valores faltantes por cada zona y variable.") %>% kable_styling(latex_options = c("striped","hold_position","scale_down"))
+
+df_missings02 <- df_missings02 %>% kbl(., booktabs = T) %>% kable_styling(latex_options = c("striped","hold_position","scale_down"))
+
+df_missings03 <- df_missings03 %>% kbl(., booktabs = T) %>% kable_styling(latex_options = c("striped","scale_down","hold_position"))
 
 ```
 
-Podemos observar que existen múltiples variables que tienen un *100%* de valores faltantes para la zona climática 8. Además, estas mismas variables una gran cantidad de valores faltantes en el resto de zonas climáticas, por lo que prescindiremos de ellas por su baja calidad del dato. Las variables de las que prescindiremos aplicando este criterio son *Evaporation*, *Sunshine*, *Pressure9am*, *Pressure3pm*, *Cloud9am* y *Cloud3pm*.
+```{r ,echo=FALSE}
+df_missings01
+df_missings02
+df_missings03
+```
 
-```{r}
+Podemos observar que existen múltiples variables que tienen un *100%* de valores faltantes para la zona climática 8. Además, en estas mismas variables existe una gran cantidad de valores faltantes en el resto de zonas climáticas, por lo que prescindiremos de ellas por su baja calidad del dato. Las variables de las que prescindiremos aplicando este criterio son *Evaporation*, *Sunshine*, *Pressure9am*, *Pressure3pm*, *Cloud9am* y *Cloud3pm*.
+
+```{r echo=FALSE, warning=FALSE}
 for(i in 1:length(zonas)){
   zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("Evaporation", "Sunshine", "Pressure9am", "Pressure3pm", "Cloud9am", "Cloud3pm")))
 }
 ```
 
-Una vez eliminadas dichas variables, resta por tratar el resto de columnas que presentan valores faltantes. Vemos que, a lo más, hay un *15%* de valores faltantes para la variable *Humidity3pm* en la zona climática 1, mientras que el resto de variables tiene menos de un *10%* de valores faltantes.
+Una vez eliminadas dichas variables, resta por tratar el resto de columnas que presentan valores faltantes. Fijándonos de nuevo en la tabla \ref{tab:Tab-6} vemos que, a lo más, hay un *15%* de valores faltantes para la variable *Humidity3pm* en la zona climática 1, mientras que el resto de zonas climáticas tiene menos valores faltantes en todas sus variables. Con el objetivo de presentar a los modelos datos limpios con los que puedan trabajar, vamos a imputar de diferentes maneras los datos faltantes según el tipo de dato de cada columna:
 
-Con el objetivo de presentar a los modelos datos limpios con los que puedan trabajar, vamos a imputar de diferentes maneras los datos faltantes según el tipo de dato de cada columna:
-
- - En las columnas numéricas (no enteras), sustuiremos en cada variable los valores faltantes por el valor promedio de dicha variable en cada zona.
- - En las columnas enteras, aplicaremos un tratamiento similar sustituyendo los valores faltantes por la parte entera de dicho valor promedio.
+ - En las columnas numéricas, sustuiremos en cada variable los valores faltantes por el valor promedio de dicha variable en cada zona.
  - En las columnas categóricas, reemplazaremos los valores faltantes por el valor modal de cada variable en cada zona. Destacar que si el valor modal es *NA*, lo sustituiremos por el siguiente valor categórico más frecuente dentro de la zona climática.
  
 La decisión del uso de estos estadísticos para imputar los valores faltantes de cada variable queda respaldada por el hecho de que el uso de estos estadísticos minimiza el impacto de la imputación sobre los propios estadísticos. Esto es, sustituir valores faltantes por la media no modifica la media de la distribución subyacente.
 
 
-```{r función para calcular la moda}
+```{r función para calcular la moda, echo=FALSE}
 calc_mode <- function(x){
   
   # List the distinct / unique values
@@ -463,11 +509,11 @@ calc_mode <- function(x){
 ```
 
 
-```{r Replace missings}
+```{r Replace missings, echo=FALSE}
 # mutate missing values
 
-columnas_enteras <- zonas[[1]][, unlist(lapply(zonas[[1]], is.integer), use.names = FALSE) ] %>% colnames()
-columnas_numericas <- zonas[[1]][, unlist(lapply(zonas[[1]], is.numeric), use.names = FALSE) ] %>% colnames() %>% setdiff(.,columnas_enteras)
+#columnas_enteras <- zonas[[1]][, unlist(lapply(zonas[[1]], is.integer), use.names = FALSE) ] %>% colnames()
+columnas_numericas <- zonas[[1]][, unlist(lapply(zonas[[1]], is.numeric), use.names = FALSE) ] %>% colnames() #%>% setdiff(.,columnas_enteras)
 columnas_categoricas <- zonas[[1]][, unlist(lapply(zonas[[1]], is.factor), use.names = FALSE) ] %>% colnames()
 
 # reemplazamos variables continuas por la media
@@ -476,9 +522,9 @@ for(i in 1:length(zonas)){
 }
 
 # reemplazamos variables enteras por la media truncada
-for(i in 1:length(zonas)){
-  zonas[[i]] <- zonas[[i]] %>% mutate_at(columnas_enteras, ~replace_na(.,floor(mean(., na.rm = TRUE)))) 
-}
+# for(i in 1:length(zonas)){
+#   zonas[[i]] <- zonas[[i]] %>% mutate_at(columnas_enteras, ~replace_na(.,floor(mean(., na.rm = TRUE)))) 
+# }
 
 # reemplazamos variables categóricas por la moda
 for(i in 1:length(zonas)){
@@ -490,45 +536,143 @@ df_missings <- get_missings()
 
 ```
 
-Vemos finalmente que tras el proceso de imputación detallado anteriormente ya no contamos con ningún valor faltante en ninguna variable.
+Vemos finalmente en la tabla \ref{tab:Tab-8} que tras el proceso de imputación detallado anteriormente ya no contamos con ningún valor faltante en ninguna variable.
 
-#### Outliers
+```{r Tab-8,echo=FALSE}
+t <- sort(sample(1:ncol(df_missings),8))
+df_missings01 <- df_missings %>% select(.,all_of(t))
+
+
+df_missings01 <- df_missings01 %>% kbl(., booktabs = T, caption = "Muestra de variables con valores faltantes imputados.") %>% kable_styling(latex_options = c("striped","hold_position","scale_down"))
+
+df_missings01
+
+```
+
+
+### Outliers
 
 Mostramos a continuación una serie de diagramas de cajas y violín para cada variable separado por valor de la variable objetivo, para cada zona climática.
 
-```{r Get outliers, eval = FALSE}
+```{r Get outliers, echo=FALSE}
 
 get_outliers <- function(){
+  saved_plots <- list.files("../pics/plots/outliers/") 
   plots_list <- list()
-  for(i in 1:length(zonas)){
-    ps <- list()
-    db_temp <- zonas[[i]][,c(columnas_enteras,columnas_numericas)]
-    for(colu in db_temp %>% colnames() %>% setdiff(.,"RainTomorrow")){
-      p <- ggplot(zonas[[i]], aes_string(x="RainTomorrow", y=colu, color="RainTomorrow")) + geom_violin() + geom_boxplot(width=0.25) + stat_boxplot(geom = "errorbar", width = 0.2) + theme(
-        axis.text.x = element_blank(),
-        axis.text.y = element_text(size=6),
-        axis.title.x = element_text(size = 8),
-        axis.title.y = element_text(size = 8),
-        legend.key.size = unit(0.1, 'cm'),
-        legend.text = element_text(size=8),
-        legend.title = element_blank())
-      ps[[colu]] <- p
+  if(length(saved_plots)<8){
+    for(i in 1:length(zonas)){
+      ps <- list()
+      db_temp <- zonas[[i]][,c(columnas_numericas)]
+      for(colu in db_temp %>% colnames() %>% setdiff(.,"RainTomorrow")){
+        p <- ggplot(zonas[[i]], aes_string(x="RainTomorrow", y=colu, color="RainTomorrow")) + geom_violin() + geom_boxplot(width=0.25) + stat_boxplot(geom = "errorbar", width = 0.2) + theme(
+          axis.text.x = element_blank(),
+          axis.text.y = element_text(size=6),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          legend.key.size = unit(0.1, 'cm'),
+          legend.text = element_text(size=8),
+          legend.title = element_blank())
+        ps[[colu]] <- p
+      }
+      new_name <- paste0("zona",as.character(i))
+      plots_list[[new_name]] <- ggarrange(plotlist =  ps, nrow = 4,ncol = 3,common.legend = TRUE)
+      ggexport(plots_list[new_name],filename = paste0("../pics/plots/outliers/out0",as.character(i),".png"),width = 630, height = 576)
+      dev.off()
     }
-    new_name <- paste0("zona",as.character(i))
-    plots_list[[new_name]] <- ggarrange(plotlist =  ps, nrow = 4,ncol = 3,common.legend = TRUE)
-    dev.off()
-  }
-  return(plots_list)
+    return(plots_list)
+    } else{for(i in 1:length(zonas)){
+      new_name <- paste0("zona",as.character(i))
+      p <- ggdraw() +draw_image(paste0("../pics/plots/outliers/out0",as.character(i),".png"))
+      plots_list[[new_name]] <- p
+      
+    }
+      return(plots_list)
+    }
 }
 
 plot_list <- get_outliers()
 
-# For zona in names(plot_list) print nicely test["zona1"]$zona1
+
 ```
 
-Debido a la naturaleza caótica del tiempo, no vamos a tratar los outliers como valores atípicos porque consideramos que son de valor para el entrenamiento de los modelos. Nos limitaremos entonces a realizar una normalización de los datos numéricos junto con una selección de variables aplicando por un algoritmo de *ranking* de variables tipo *step*.
+```{r Fig-02,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 1, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
 
-#### Transformación de las variables categóricas
+p <- plot_list[names(plot_list)[1]]
+
+p
+
+
+```
+
+```{r Fig-03,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 2, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- plot_list[names(plot_list)[2]]
+
+p
+
+
+```
+
+```{r Fig-04,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 3, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- plot_list[names(plot_list)[3]]
+
+p
+
+
+```
+
+```{r Fig-05,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 4, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- plot_list[names(plot_list)[4]]
+
+p
+
+
+```
+
+```{r Fig-06,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 5, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- plot_list[names(plot_list)[5]]
+
+p
+
+
+```
+
+```{r Fig-07,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 6, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- plot_list[names(plot_list)[6]]
+
+p
+
+
+```
+
+```{r Fig-08,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 7, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- plot_list[names(plot_list)[7]]
+
+p
+
+
+```
+
+```{r Fig-09,echo=FALSE,fig.cap="Boxplots y violin plots de las variables de la Zona 8, según el valor de `RainTomorrow`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- plot_list[names(plot_list)[8]]
+
+p
+
+
+```
+
+
+Debido a la naturaleza caótica del tiempo, no vamos a tratar los outliers como valores atípicos porque consideramos que son de valor para el entrenamiento de los modelos y no introducen demasiado ruido. Nos limitaremos entonces a realizar una normalización de los datos numéricos junto con una selección de variables aplicando por un algoritmo de *ranking* de variables tipo *step*.
+
+No obstante, si que es posible en este punto estimar qué variables van a ser más relevantes para los modelos en cada zona. En aquellas variables en donde exista una gran diferencia visual entre el caso `RainTomorrow=YES` y el caso `RainTomorrow=NO` tendremos que las variables aleatorias subyacentes en estos casos son diferentes, y por tanto aportarán más información al modelo. De este modo, estas variables son `WindGustSpeed`, `WindGustSpeed9am`, `MinTemp`, `WindGustSpeed`, `Humidity9am` y `Humidity3pm`, dependiendo de si nos encontramos en una u otra zona climática.
+
+### Transformación de las variables categóricas
 
 Las variables categóricas que disponemos son *Location*, *WindGustDir*, *WindDir9am*, *WindDir3pm*, *RainToday* y *RainTomorrow*. Para *Location*,*RainToday* y *RainTomorrow* vamos a aplicar técnicas de one hot encoding con las que transformaremos estas variables en numéricas. Por otro lado, para las variables categóricas relativas a la dirección del viento, vamos a aplicar una transformación de forma que combinemos esta información con las variables enteras relativas a la intensidad del viento, obteniendo dos variables numéricas que expresan el valor del coseno y del seno del vector viento.
 

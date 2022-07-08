@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.7.7)  7 JUL 2022 22:44
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.7.7)  8 JUL 2022 15:02
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -522,24 +522,24 @@ LaTeX Warning: Label `sub@tab:unnamed-chunk-2' multiply defined.
 )
 \openout1 = `Analisis-y-modelado-de-datos.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 164.
-LaTeX Font Info:    ... okay on input line 164.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -586,40 +586,40 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: threeparttable package is loaded.
 Package caption Info: wrapfig package is loaded.
 Package caption Info: End \AtBeginDocument code.
-LaTeX Info: Redefining \. on input line 164.
-LaTeX Info: Redefining \% on input line 164.
-Package hyperref Info: Link coloring OFF on input line 164.
+LaTeX Info: Redefining \. on input line 165.
+LaTeX Info: Redefining \% on input line 165.
+Package hyperref Info: Link coloring OFF on input line 165.
 (./Analisis-y-modelado-de-datos.out) (./Analisis-y-modelado-de-datos.out)
 \@outlinefile=\write4
 \openout4 = `Analisis-y-modelado-de-datos.out'.
 
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 166.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 167.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 166.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 167.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 166.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 167.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 166.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 167.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 166.
+(Font)              <12> on input line 167.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 166.
+(Font)              <8> on input line 167.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 166.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 166.
+(Font)              <6> on input line 167.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 167.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 166.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 167.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (./Analisis-y-modelado-de-datos.toc
@@ -645,33 +645,69 @@ LaTeX Info: Redefining \% on input line 1.
 (./Analisis-y-modelado-de-datos.lof
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
-)
+[1
+
+{/home/pablo/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}])
 \tf@lof=\write7
 \openout7 = `Analisis-y-modelado-de-datos.lof'.
 
-[1
-
-{/home/pablo/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5]
-<../pics/PD_Design_Climate_2.png, id=133, 3018.27625pt x 2094.82625pt>
-File: ../pics/PD_Design_Climate_2.png Graphic file (type png)
-<use ../pics/PD_Design_Climate_2.png>
-Package pdftex.def Info: ../pics/PD_Design_Climate_2.png  used on input line 574.
-(pdftex.def)             Requested size: 352.27567pt x 244.49594pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[6]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 643.
+[2] [3] [4] [5]
+<../pics/PD_Design_Climate_2.png, id=175, 3018.27625pt x 2094.82625pt>
+File: ../pics/PD_Design_Climate_2.png Graphic file (type png)
+<use ../pics/PD_Design_Climate_2.png>
+Package pdftex.def Info: ../pics/PD_Design_Climate_2.png  used on input line 627.
+(pdftex.def)             Requested size: 422.74002pt x 293.40154pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[6] [7 <../pics/PD_Design_Climate_2.png (PNG copy)>] [8]
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf, id=199, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf  used on input line 829.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf, id=200, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf  used on input line 838.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf, id=201, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf  used on input line 847.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf, id=202, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf  used on input line 856.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf, id=203, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf  used on input line 865.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf, id=204, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf  used on input line 874.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf, id=205, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf  used on input line 883.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+<Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf, id=206, 469.755pt x 325.215pt>
+File: Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf Graphic file (type pdf)
+<use Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf>
+Package pdftex.def Info: Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf  used on input line 892.
+(pdftex.def)             Requested size: 375.82602pt x 260.18724pt.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 909.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 646.
-[7 <../pics/PD_Design_Climate_2.png (PNG copy)>] [8] [9]
-LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 815.
-(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/ts1lmtt.fd
-File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [10] [11] [12] (./Analisis-y-modelado-de-datos.aux
+) [9 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-02-1.pdf>] [10 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-03-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-04-1.pdf>] [11 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-05-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-06-1.pdf>] [12 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-07-1.pdf> <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-08-1.pdf>] [13 <./Analisis-y-modelado-de-datos_files/figure-latex/Fig-09-1.pdf>] [14] [15] (./Analisis-y-modelado-de-datos.aux
 LaTeX Info: Redefining \. on input line 22.
 LaTeX Info: Redefining \% on input line 22.
 )
@@ -679,21 +715,21 @@ LaTeX Info: Redefining \% on input line 22.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `Analisis-y-modelado-de-datos.out' has not changed.
-(rerunfilecheck)             Checksum: ED560FFB56AE04D9196ADDCBD5BE9791;2430.
+(rerunfilecheck)             Checksum: 524E142A89AEEB1930DF0F27665CECA9;2903.
  ) 
 Here is how much of TeX's memory you used:
- 15754 strings out of 479966
- 254281 string characters out of 5887130
- 614130 words of memory out of 5000000
- 33600 multiletter control sequences out of 15000+600000
- 532143 words of font info for 76 fonts, out of 8000000 for 9000
+ 15820 strings out of 479966
+ 258528 string characters out of 5887130
+ 609279 words of memory out of 5000000
+ 33641 multiletter control sequences out of 15000+600000
+ 531520 words of font info for 74 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 72i,11n,77p,724b,566s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtti10.pfb>
-Output written on Analisis-y-modelado-de-datos.pdf (12 pages, 491714 bytes).
+ 72i,11n,77p,540b,770s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtti10.pfb>
+Output written on Analisis-y-modelado-de-datos.pdf (15 pages, 982750 bytes).
 PDF statistics:
- 271 PDF objects out of 1000 (max. 8388607)
- 226 compressed objects within 3 object streams
- 69 named destinations out of 1000 (max. 500000)
- 94 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 362 PDF objects out of 1000 (max. 8388607)
+ 293 compressed objects within 3 object streams
+ 90 named destinations out of 1000 (max. 500000)
+ 158 words of extra memory for PDF output out of 10000 (max. 10000000)
 
