@@ -43,6 +43,7 @@ library(data.table)
 library(cowplot)
 library(RColorBrewer)
 library(viridis)
+library(tidyquant)
 ```
 
 \listoftables
@@ -698,15 +699,22 @@ Las variables categóricas que disponemos son *Location*, *WindGustDir*, *WindDi
 ```{r Transformación de variables categóricas, echo=FALSE}
 
 # Iterar por zonas
-for(i in 1:(length(zonas)-1)){
+for(i in 1:(length(zonas))){
   dmy <- dummyVars( ~ +Location, data = zonas[[i]])
-  trsf <- data.frame(predict(dmy, newdata = zonas[[i]]))
-  zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("Location"))) %>% cbind(.,trsf)
+  if(i<8){
+    trsf <- data.frame(predict(dmy, newdata = zonas[[i]]))
+    zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("Location"))) %>% cbind(.,trsf)
+  } else{
+    new_col <- paste0("Location.",zonas[[i]]$Location %>% levels())
+    zonas[[i]][new_col] <- rep(1,1271)
+    zonas[[i]] <- zonas[[i]] %>% select(., -any_of(c("Location")))
+  }
+  
   zonas[[i]][,c("RainToday","RainTomorrow")] <- lapply(zonas[[i]][,c("RainToday","RainTomorrow")],function(x) as.numeric(x)-1) %>% as.data.frame() 
 }
-
-zonas[[8]] <- zonas[[8]] %>% select(., -any_of(c("Location"))) 
-zonas[[8]][,c("RainToday","RainTomorrow")] <- lapply(zonas[[8]][,c("RainToday","RainTomorrow")],function(x) as.numeric(x)-1) %>% as.data.frame() 
+# names(zonas[[8]])[names(zonas[[8]]) == "Location"] <- paste0("Location.",zonas[[8]]$Location %>% levels())
+#zonas[[8]] <- zonas[[8]] %>% select(., -any_of(c("Location"))) 
+#zonas[[8]][,c("RainToday","RainTomorrow")] <- lapply(zonas[[8]][,c("RainToday","RainTomorrow")],function(x) as.numeric(x)-1) %>% as.data.frame() 
 # zonas[[1]] %>% head() %>% View()
 ```
 
@@ -798,42 +806,9 @@ zonas[[3]] %>% head() %>% kbl(., booktabs = T, caption = "Variables normalizadas
 
 ### Representación de las series temporales
 
-```{r, echo=FALSE}
-# Reverse one hot encoding para el plot de las series temporales
-# Seleccionamos las columnas location
-locations <- grep("^Location.[a-zA-Z0-9]*", colnames(zonas[[3]]), value = TRUE)
+Nos disponemos a continuación a visualizar las series temporales de las variables numéricas de la zona 1. El objetivo de esta visualización es apoyar la descomposición que haremos más tarde de las series temporales, aportándo variables tipo ventana con información de estadísticos previos.
 
-# Creamos la columna Location
-col_vec <- c()
-for(loc_name in locations){
-  Location_name <- loc_name %>% strsplit(.,'.',fixed=TRUE)
-  Location_name <- Location_name[[1]][2]
-  col_vec <- c(col_vec,rep(Location_name,1271))
-}
-
-# Filtramos la serie temporal por el ultimo año, añadimos la columna Location y eliminamos las variables one hot
-Loc_2 <- zonas[[3]] 
-Loc_2["Location"] <- col_vec %>% as.factor()
-Loc_2 <- Loc_2 %>% filter(.,Date>= as.Date("2017-01-01"))%>% select(.,-all_of(locations))
-
-# Representamos la serie temporal para la variable MinTemp
-g <- ggplot(Loc_2, aes(x = Date, y = MinTemp)) + 
-  geom_line(aes(color = Location), size = 0.2) +
-  theme(
-          axis.text.x = element_text(size=6),
-          axis.text.y = element_text(size=6),
-          axis.title.x = element_text(size = 8),
-          axis.title.y = element_text(size = 8),
-          legend.key.size = unit(0.5, 'cm'),
-          legend.text = element_text(size=8),
-          legend.title = element_text(face = "bold",size=8),
-          legend.position="top")
-
-
-```
-
-
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 
 
 get_ts <- function(){
@@ -921,7 +896,7 @@ plot_list <- get_ts()
 
 ```
 
-```{r}
+```{r, echo=FALSE,out.width="90%", fig.cap="\\centering Muestra de las series temporales por `Location` para cada variable de la zona 1",fig.align='center'}
 
 i <- 1
 ps <- list()
@@ -957,8 +932,6 @@ for(colu in ts_cols){
     legend.title = element_text(face = "bold",size=8),
     legend.position="top")
   
-  print(paste0("All good for",colu, "when plotting"))
-  
   ps[[colu]] <- p #añadimos plot a la lista
 }
 # new_name <- paste0("zona",as.character(i))
@@ -967,15 +940,192 @@ for(colu in ts_cols){
 # dev.off()
 ```
 
-### Análisis de la estacionalidad
 
-@Hallman1089425
+
+```{r Fig-11,echo=FALSE,fig.cap="Serie temporal de la variable `MinTemp` en la zona 1, según el valor de `Location` ", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[1]
+
+p
+
+
+```
+
+```{r Fig-12,echo=FALSE,fig.cap="Serie temporal de la variable `MaxTemp` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[2]
+
+p
+
+
+```
+
+```{r Fig-13,echo=FALSE,fig.cap="Serie temporal de la variable `Rainfall` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[3]
+
+p
+
+
+```
+
+```{r Fig-14,echo=FALSE,fig.cap="Serie temporal de la variable `Humidity9am` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[4]
+
+p
+
+
+```
+
+```{r Fig-15,echo=FALSE,fig.cap="Serie temporal de la variable `Humidity3pm` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[5]
+
+p
+
+
+```
+
+```{r Fig-16,echo=FALSE,fig.cap="Serie temporal de la variable `Temp9am` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[6]
+
+p
+
+
+```
+
+```{r Fig-17,echo=FALSE,fig.cap="Serie temporal de la variable `Temp3pm` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[7]
+p
+
+
+```
+
+```{r Fig-18,echo=FALSE,fig.cap="Serie temporal de la variable `WindGustDir\\_x` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[8]
+
+p
+
+
+```
+
+
+```{r Fig-19,echo=FALSE,fig.cap="Serie temporal de la variable `WindGustDir\\_y` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[9]
+
+p
+
+
+```
+
+```{r Fig-20,echo=FALSE,fig.cap="Serie temporal de la variable `WindDir9am\\_x` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[10]
+
+p
+
+
+```
+
+```{r Fig-21,echo=FALSE,fig.cap="Serie temporal de la variable `WindDir9am\\_y` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[11]
+
+p
+
+
+```
+
+```{r Fig-22,echo=FALSE,fig.cap="Serie temporal de la variable `WindDir3pm\\_x` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[12]
+
+p
+
+
+```
+
+```{r Fig-23,echo=FALSE,fig.cap="Serie temporal de la variable `WindDir3pm\\_y` en la zona 1, según el valor de `Location`", message=FALSE,results='hide', out.height="40%",fig.align = 'center'}
+
+p <- ps[13]
+
+p
+
+
+```
+
+
+<!-- ### Análisis de la estacionalidad 
+
+Para tratar la dimensión `Tiempo`, vamos a crear una serie de columnas adicionales para cada variable. Por un lado, vamos a dedicar esta sección descomponer las series temporales de cada variable, obteniendo una información de la tendencia o `trend` y de la estacionalidad o `seasonality` de la serie temporal.
+
+```{r}
+locations <- grep("^Location.[a-zA-Z0-9]*", colnames(zonas[[1]]), value = TRUE)
+for(city_index in which(colnames(zonas[[1]]) %in% locations)){
+    db_filtered <- zonas[[1]] %>% filter(if_any(city_index, ~ . == 1)) %>% select(.,-c(locations,"RainToday","RainTomorrow"))
+    city_ts_decomposition <- decompose(birthsComp)
+}
+
+```
+-->
+
 
 ### Creación de variables ventana
+
+@Hallman1089425
 
 Creación de nuevas variables ventana para trend y seasonality
 
 Crear ventanas para RainToday de estadísticos rolling patrá
+
+```{r,echo=FALSE}
+
+last_dbs <- list()
+for(i in 1:length(zonas)){
+  locations <- grep("^Location.[a-zA-Z0-9]*", colnames(zonas[[i]]), value = TRUE)
+  columnas_numericas <- zonas[[i]][, unlist(lapply(zonas[[i]], is.numeric), use.names = FALSE) ] %>% colnames()
+  columnas_numericas <- setdiff(columnas_numericas,locations)
+  city_indices <- which(colnames(zonas[[i]]) %in% locations)
+  window_dfs <- list()
+  for(city_index in city_indices){
+    db_filtered <- zonas[[i]] %>% filter(if_any(city_index, ~ . == 1)) %>% select(.,-locations)
+    window_df <- db_filtered %>% tq_mutate(
+                      # tq_mutate args
+                      select     = columnas_numericas,
+                      mutate_fun = rollapply, 
+                      # rollapply args
+                      width      = 7,
+                      align      = "right",
+                      FUN        = mean,
+                      # mean args
+                      na.rm      = TRUE,
+                      # tq_mutate args
+                      col_rename = paste0(columnas_numericas,"_mean7"))
+    for(city in locations){
+      if(which(colnames(zonas[[i]]) == city)==city_index){
+        window_df[city] <- rep(1,1271)
+      } else {
+        window_df[city] <- rep(0,1271)
+      }
+    }
+    for(new_var in paste0(columnas_numericas,"_mean7")){
+      new_var_mean <- window_df[[new_var]] %>% mean(.,na.rm=TRUE)
+      window_df[new_var] <- replace_na(window_df[new_var],new_var_mean)
+    }
+    
+    window_dfs[[as.character(city_index)]] <- window_df
+  }
+  new_df <- bind_rows(window_dfs) %>% select(.,-Date)
+  last_dbs[[i]] <- new_df
+  print(paste0("Exito ",as.character(i)))
+  }
+
+```
 
 ### Feature selection
 
