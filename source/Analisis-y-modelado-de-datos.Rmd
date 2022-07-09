@@ -41,6 +41,8 @@ library(factoextra)
 library(mltools)
 library(data.table)
 library(cowplot)
+library(RColorBrewer)
+library(viridis)
 ```
 
 \listoftables
@@ -710,7 +712,7 @@ zonas[[8]][,c("RainToday","RainTomorrow")] <- lapply(zonas[[8]][,c("RainToday","
 
 Del proceso de *one hot encoding* podemos estacar que en la zona 8 se ha eliminado la variable `Location` ya que esta sólamente tenía un único valor, por lo que no aporta información al modelado para esta zona. Además, se han creado variables numéricas del tipo `Location.Katherine` que indican si la observación pertenece o no a dicha localización. De esta manera, tras el proceso de *one hot encoding*, explotamos cada variable categórica con *n* niveles en *n* variables binarias, conocidas como *dummy variables*.
 
-Tras el tratamiento de esas variables categóricas, vamos a asignar un valor en radianes a cada dirección del viento según se muestran en la figura \ref{fig:Fig-10}^[Fuente - @QRSAUAQ], para después calcular el coseno y el seno de dicha dirección y multiplicar ambos por la variable respectiva de intensidad del viento. Con esta transformación, condensamos todas las variables relativas a la dirección e intensidad del viento en la coordenada $x$ e $y$ del vector viento.
+Tras el tratamiento de esas variables categóricas, vamos a asignar un valor en radianes a cada dirección del viento según se muestran en la figura \ref{fig:Fig-10}^[Fuente - @QRSAUAQ]. Después, calcularemos el coseno (componente este-oeste) y el seno (componente norte-sur) de dicha dirección y los multiplicaremos por sus respectivas variables de intensidad del viento. Con esta transformación, condensamos todas las variables relativas a la dirección e intensidad del viento en la coordenada $x$ e $y$ del vector viento.
 
 
 ```{r Fig-10,echo=FALSE,fig.cap="16 direcciones del viento", message=FALSE,results='hide',out.height="40%",fig.align = 'center'}
@@ -792,18 +794,196 @@ zonas[[3]] %>% head() %>% kbl(., booktabs = T, caption = "Variables normalizadas
 ```
 
 
-## Eliminación de variables y representación de los datos
+## Representación de los datos, tratamiento de la variable `tiempo` y selección de variables 
+
+### Representación de las series temporales
+
+```{r, echo=FALSE}
+# Reverse one hot encoding para el plot de las series temporales
+# Seleccionamos las columnas location
+locations <- grep("^Location.[a-zA-Z0-9]*", colnames(zonas[[3]]), value = TRUE)
+
+# Creamos la columna Location
+col_vec <- c()
+for(loc_name in locations){
+  Location_name <- loc_name %>% strsplit(.,'.',fixed=TRUE)
+  Location_name <- Location_name[[1]][2]
+  col_vec <- c(col_vec,rep(Location_name,1271))
+}
+
+# Filtramos la serie temporal por el ultimo año, añadimos la columna Location y eliminamos las variables one hot
+Loc_2 <- zonas[[3]] 
+Loc_2["Location"] <- col_vec %>% as.factor()
+Loc_2 <- Loc_2 %>% filter(.,Date>= as.Date("2017-01-01"))%>% select(.,-all_of(locations))
+
+# Representamos la serie temporal para la variable MinTemp
+g <- ggplot(Loc_2, aes(x = Date, y = MinTemp)) + 
+  geom_line(aes(color = Location), size = 0.2) +
+  theme(
+          axis.text.x = element_text(size=6),
+          axis.text.y = element_text(size=6),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          legend.key.size = unit(0.5, 'cm'),
+          legend.text = element_text(size=8),
+          legend.title = element_text(face = "bold",size=8),
+          legend.position="top")
+
+
+```
+
+
+```{r, echo=FALSE}
+
+
+get_ts <- function(){
+  saved_plots <- list.files("../pics/plots/ts/") 
+  plots_list <- list()
+  if(length(saved_plots)<8){
+    for(i in 1:length(zonas)){
+      ps <- list()
+      # Seleccionamos las columnas location
+      locations <- grep("^Location.[a-zA-Z0-9]*", colnames(zonas[[i]]), value = TRUE)
+      
+      # Creamos la columna Location
+      col_vec <- c()
+      for(loc_name in locations){
+        Location_name <- loc_name %>% strsplit(.,'.',fixed=TRUE)
+        Location_name <- Location_name[[1]][2]
+        col_vec <- c(col_vec,rep(Location_name,1271))
+      }
+      
+      # Filtramos la serie temporal por el ultimo año, añadimos la columna Location y eliminamos las variables one hot
+      db_filtered <- zonas[[i]] 
+      db_filtered["Location"] <- col_vec %>% as.factor()
+      db_filtered <- db_filtered %>% filter(.,Date>= as.Date("2017-01-01"))%>% select(.,-all_of(locations))
+      
+      ## Creamos los plots 
+      # Representamos la serie temporal para la variable MinTemp
+      # g <- ggplot(Loc_2, aes(x = Date, y = MinTemp)) + 
+      #   geom_line(aes(color = Location), size = 0.2) +
+      #   scale_color_manual(values = c("#00AFBB", "#E7B800")) +
+      #   theme(
+      #           axis.text.x = element_text(size=6),
+      #           axis.text.y = element_text(size=6),
+      #           axis.title.x = element_text(size = 8),
+      #           axis.title.y = element_text(size = 8),
+      #           legend.key.size = unit(0.5, 'cm'),
+      #           legend.text = element_text(size=8),
+      #           legend.title = element_text(face = "bold",size=8),
+      #           legend.position="top")
+      
+      # ts variables
+      ts_cols <- db_filtered %>% colnames() %>% setdiff(.,c("Date","RainToday","RainTomorrow","Location"))
+      print(paste0("All good for",as.character(i), "before plotting"))
+      for(colu in ts_cols){
+        # New plot
+        p <- ggplot(db_filtered, aes(x = Date, y = colu)) + geom_line(aes(color = Location), size = 0.2) + theme(
+          axis.text.x = element_text(size=6),
+          axis.text.y = element_text(size=6),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          legend.key.size = unit(0.25, 'cm'),
+          legend.text = element_text(size=8),
+          legend.title = element_text(face = "bold",size=8),
+          legend.position="top")
+        
+        
+         
+        # Old plot
+        # p <- ggplot(zonas[[i]], aes_string(x="RainTomorrow", y=colu, color="RainTomorrow")) + geom_violin() + geom_boxplot(width=0.25) + stat_boxplot(geom = "errorbar", width = 0.2) + theme(
+        #   axis.text.x = element_blank(),
+        #   axis.text.y = element_text(size=6),
+        #   axis.title.x = element_text(size = 8),
+        #   axis.title.y = element_text(size = 8),
+        #   legend.key.size = unit(0.1, 'cm'),
+        #   legend.text = element_text(size=8),
+        #   legend.title = element_blank()) # end of plot
+        ps[[colu]] <- p #añadimos plot a la lista
+      }
+      new_name <- paste0("zona",as.character(i))
+      plots_list[[new_name]] <- ggarrange(plotlist =  ps, nrow = length(ts_cols)/2,ncol = 2,common.legend = TRUE)
+      ggexport(plots_list[new_name],filename = paste0("../pics/plots/ts/ts0",as.character(i),".png"),width = 723, height = 452)
+      dev.off()
+    }
+    return(plots_list)
+    } else{for(i in 1:length(zonas)){
+      new_name <- paste0("zona",as.character(i))
+      p <- ggdraw() +draw_image(paste0("../pics/plots/ts/ts0",as.character(i),".png"))
+      plots_list[[new_name]] <- p
+      
+    }
+      return(plots_list)
+    }
+}
+
+plot_list <- get_ts()
+
+```
+
+```{r}
+
+i <- 1
+ps <- list()
+# Seleccionamos las columnas location
+locations <- grep("^Location.[a-zA-Z0-9]*", colnames(zonas[[i]]), value = TRUE)
+
+# Creamos la columna Location
+col_vec <- c()
+for(loc_name in locations){
+  Location_name <- loc_name %>% strsplit(.,'.',fixed=TRUE)
+  Location_name <- Location_name[[1]][2]
+  col_vec <- c(col_vec,rep(Location_name,1271))
+}
+
+# Filtramos la serie temporal por el ultimo año, añadimos la columna Location y eliminamos las variables one hot
+db_filtered <- zonas[[i]] 
+db_filtered["Location"] <- col_vec %>% as.factor()
+db_filtered <- db_filtered %>% filter(.,Date>= as.Date("2017-01-01"))%>% select(.,-all_of(locations))
+
+
+# ts variables
+ts_cols <- db_filtered %>% colnames() %>% setdiff(.,c("Date","RainToday","RainTomorrow","Location"))
+
+for(colu in ts_cols){
+  # New plot
+  p <- ggplot(db_filtered, aes_string(x="Date", y=colu, color="Location")) + geom_line(aes(color = Location), size = 0.2) + theme(
+    axis.text.x = element_text(size=6),
+    axis.text.y = element_text(size=6),
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    legend.key.size = unit(0.25, 'cm'),
+    legend.text = element_text(size=8),
+    legend.title = element_text(face = "bold",size=8),
+    legend.position="top")
+  
+  print(paste0("All good for",colu, "when plotting"))
+  
+  ps[[colu]] <- p #añadimos plot a la lista
+}
+# new_name <- paste0("zona",as.character(i))
+# plots_list[[new_name]] <- ggarrange(plotlist =  ps, nrow = length(ts_cols)/2,ncol = 2,common.legend = TRUE)
+# ggexport(plots_list[new_name],filename = paste0("../pics/plots/ts/ts0",as.character(i),".png"),width = 723, height = 452)
+# dev.off()
+```
+
+### Análisis de la estacionalidad
+
+@Hallman1089425
+
+### Creación de variables ventana
+
+Creación de nuevas variables ventana para trend y seasonality
+
+Crear ventanas para RainToday de estadísticos rolling patrá
 
 ### Feature selection
 
-RESUMEN DE TODO: 
-- Las columnas categóricas son:"Location"     "WindGustDir"  "WindDir9am"   "WindDir3pm"   "RainToday"    "RainTomorrow". Vamos a sustituir las Wind_cosas por dos variables cada una, que indican el valor del seno (componente norte-sur) y el coseno(componente este-oeste) de la dirección del viento. Además, como tenemos información de la intesidad del viento por hora, multiplicaremos estos valores para agregar la información. Con este criterio, transformamos variablas variables numéricas y categóricas, las cuales con el resto de variables numéricas someteremos a un algoritmo step para seleccionar las más relevantes para el modelado. Adicionalmente, nos restan las variables categóricas "Location" y "RainToday", las cuales someteremos a un onehot encoding para el modelado.
 
 
 
-**Con las numéricas normalizamos y hacemos el step* y con las categóricas hacemos PCA   
+**Con las numéricas normalizamos y hacemos el step**
 
-Factorial Analysis of Mixed Data (FAMD)
 
 As presented in^[An Introduction to Variable and Feature Selection - @AITFS], hemos seguido los pasos que proponen a la hora de trabajar, es decir:
 
@@ -811,7 +991,7 @@ As presented in^[An Introduction to Variable and Feature Selection - @AITFS], he
  
 ```{r step for selecting most relevant numeric variables, eval=FALSE}
 
-summary(lm1 <- lm(Fertility ~ ., data = swiss))
+summary(lm1 <- lm(RainTomorrow ~ ., data = select(zonas[[3]],-c("Date"))))
 slm1 <- step(lm1)
 summary(slm1)
 slm1$anova
@@ -820,9 +1000,6 @@ slm1$anova
 
 
 
-## Creación de nuevas variables ventana para trend y seasonality
-
-Crear ventanas para RainToday de estadísticos rolling patrá
 
 ## Modelado
 
