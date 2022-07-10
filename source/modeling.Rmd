@@ -1,0 +1,6 @@
+ 
+
+
+## Modelado
+
+### Train-test split
