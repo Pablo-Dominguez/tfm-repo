@@ -1,0 +1,248 @@
+
+```{r}
+zona_name <- "zona8"
+```
+
+
+
+```{r message=FALSE, echo=FALSE}
+library(tidyverse)
+library(kableExtra)
+library(ggpubr)
+library(randomForest)
+library(mlbench)
+library(caret)
+library(FactoMineR)
+library(factoextra)
+library(mltools)
+library(data.table)
+library(rpart)
+library(rpart.plot)
+library(class)
+library(cowplot)
+library(RColorBrewer)
+library(viridis)
+library(tidyquant)
+library (e1071)
+library(tree)
+library(cvms)
+```
+
+
+```{r echo=FALSE,message=FALSE}
+# Importamos los datos para el modelado
+# 
+main_data <- read.csv(file=paste0("../db/processed_dbs/data_",zona_name,".csv"))
+main_data[,"RainTomorrow"] <-lapply(main_data$RainTomorrow,toString) %>% unlist() %>% as.factor()
+main_data[,"RainToday"] <- lapply(main_data[,"RainToday"],as.numeric) %>% unlist()
+attach(main_data)
+```
+
+
+
+```{r tab-14}
+
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(main_data))
+
+#
+set.seed(123)
+train_ind <- sample(seq_len(nrow(main_data)), size = smp_size)
+
+train <- main_data[train_ind, ]
+test <- main_data[-train_ind, ]
+
+```
+
+ 
+
+```{r ,echo=FALSE}
+models_dir <- paste0("../models/",zona_name,"/")
+initial_models <- list.files(models_dir)
+```
+
+
+```{r Log-reg, echo=FALSE, message=FALSE}
+
+if(!"logreg_01.Rds" %in% initial_models){
+  log.model <- glm(RainTomorrow ~., data = train, family = binomial(link = "logit"))
+  saveRDS(log.model,paste0("../models/",zona_name,"/logreg_01.Rds"))
+} 
+
+
+log.model <- readRDS(paste0("../models/",zona_name,"/logreg_01.Rds"))
+#summary(log.model)
+
+
+log.predictions <- predict(log.model, test, type="response")
+log.prediction.rd <- ifelse(log.predictions > 0.5, 1, 0)
+n_rt <- which(colnames(test) %in% c("RainTomorrow"))
+
+
+```
+
+```{r, echo=FALSE,fig.cap="Matriz de confusión regresión logística", out.height="40%",fig.align = 'center'}
+
+conf_matrix <- table(log.prediction.rd, test[,n_rt]) %>% as.data.frame()
+colnames(conf_matrix) <- c("Prediction","Target","N")
+conf_matrix["Pos_0"] <- c("TP","FN","FP","TN")
+conf_matrix["Pos_1"] <- c("TN","FP","FN","TP")
+acc_log <- sum(diag( table(log.prediction.rd, test[,n_rt])))/sum(table(log.prediction.rd, test[,n_rt]))
+#0.82
+```
+
+
+
+```{r kernel lineal, echo=FALSE,message=FALSE}
+start_time <- Sys.time()
+##print(start_time)
+if(!"svm_linmod01.Rds" %in% initial_models){
+  svm_linmod01 <- tune(svm ,RainTomorrow ~ ., data = train, kernel = "linear",
+                       ranges =list(cost=2**seq(from=-2, to=5)),
+                       tunecontrol = tune.control(cross=5))
+  saveRDS(svm_linmod01,paste0("../models/",zona_name,"/svm_linmod01.Rds"))
+  
+}
+
+svm_linmod01 <- readRDS(paste0("../models/",zona_name,"/svm_linmod01.Rds"))
+##print("Modelado inicial con kernel lineal")
+end_time <- Sys.time()
+##print(end_time - start_time)
+
+```
+
+```{r evaluación kernel lineal, echo=FALSE,message=FALSE,fig.cap="Matriz de confusión svm con kernel lineal", out.height="40%",fig.align = 'center'}
+confusion_svm_linmod01 = confusion_matrix(targets = test[,"RainTomorrow"], 
+                                   predictions = predict(svm_linmod01$best.model,test),
+                                   metrics = list("Accuracy" = TRUE))
+
+
+acc_svm_linmod01 <- confusion_svm_linmod01$`Accuracy`[[1]]
+
+```
+
+
+```{r kernel polinomial,  echo=FALSE,message=FALSE}
+start_time <- Sys.time()
+#print(start_time)
+if(!"svm_polymod01.Rds" %in% initial_models){
+  svm_polymod01 <- tune(svm ,RainTomorrow ~ ., data = train, kernel = "polynomial",
+                         ranges =list(cost=2**seq(from=-2, to=5)),
+                         degree = 3,
+                         tunecontrol = tune.control(cross=5))
+  saveRDS(svm_polymod01,paste0("../models/",zona_name,"/svm_polymod01.Rds"))
+}
+
+svm_polymod01 <- readRDS(paste0("../models/",zona_name,"/svm_polymod01.Rds"))
+#print("Modelado inicial con kernel polinomial")
+end_time <- Sys.time()
+#print(end_time - start_time)
+
+```
+
+```{r evaluación kernel polynomial,message=FALSE,echo=FALSE,fig.cap="Matriz de confusión svm con kernel polinomial", out.height="40%",fig.align = 'center'}
+confusion_svm_polymod01 = confusion_matrix(targets = test[,"RainTomorrow"], 
+                                   predictions = predict(svm_polymod01$best.model,test),
+                                   metrics = list("Accuracy" = TRUE))
+
+
+acc_svm_polymod01 <- confusion_svm_polymod01$`Accuracy`[[1]]
+
+```
+
+
+```{r kernel sigmoidal, echo=FALSE,message=FALSE}
+start_time <- Sys.time()
+#print(start_time)
+if(!"svm_sigmod01.Rds" %in% initial_models){
+  svm_sigmod01 <- tune(svm ,RainTomorrow ~ ., data = train, kernel = "sigmoid",
+                         ranges =list(cost=2**seq(from=-2, to=5)),
+                         tunecontrol = tune.control(cross=5))
+  
+  saveRDS(svm_sigmod01,paste0("../models/",zona_name,"/svm_sigmod01.Rds"))
+}
+
+svm_sigmod01 <- readRDS(paste0("../models/",zona_name,"/svm_sigmod01.Rds"))
+#print("Modelado inicial con kernel polinomial")
+  
+
+end_time <- Sys.time()
+#print(end_time - start_time)
+```
+
+
+```{r evaluación kernel sigmoidal, echo=FALSE,message=FALSE,fig.cap="Matriz de confusión svm con kernel sigmoidal", out.height="40%",fig.align = 'center'}
+confusion_svm_sigmod01 = confusion_matrix(targets = test[,"RainTomorrow"], 
+                                   predictions = predict(svm_sigmod01$best.model,test),
+                                   metrics = list("Accuracy" = TRUE))
+
+acc_svm_sigmod01 <- confusion_svm_sigmod01$`Accuracy`[[1]]
+```
+
+
+
+```{r crossv knn,echo=FALSE,message=FALSE}
+#set.seed(123)
+
+grid = expand.grid(k = c(seq(3,45,3))) 
+
+knn_mod01_cv = train(RainTomorrow ~., method= "knn",
+                    data = train,
+                    trControl = trainControl(method = 'cv',
+                                             number = 5,
+                                             search = "grid"),
+                     tuneGrid = grid)
+
+#knn_mod01_cv$results
+#knn_mod01_cv$finalModel
+```
+
+
+```{r training with best k,  echo=FALSE,message=FALSE, fig.cap="Matriz de confusión knn.", out.height="40%",fig.align = 'center'}
+n_rt <- which(colnames(train) %in% c("RainTomorrow"))
+knn_mod01 <- knn(train[,-c(n_rt)],test[,-c(n_rt)],cl=train$RainTomorrow,k=knn_mod01_cv$bestTune[[1]])
+confusion_knn_mod01 <- table(knn_mod01,test$RainTomorrow)
+
+
+acc_knn_mod01 <- sum(diag(confusion_knn_mod01))/sum(confusion_knn_mod01)
+```
+
+
+
+```{r,  echo=FALSE,message=FALSE,fig.cap="Matriz de confusión del árbol de decisión", out.height="40%",fig.align = 'center'}
+tree_mod01 <- rpart(RainTomorrow ~., data = train,cp=0.1)
+p <- predict(tree_mod01, train, type = 'class')
+confusion_tree_mod01 <- confusionMatrix(p, train$RainTomorrow, positive="1")
+
+acc_tree_mod01 <- sum(diag(confusion_tree_mod01$table))/sum(confusion_tree_mod01$table)
+```
+
+
+```{r,  echo=FALSE,message=FALSE,fig.cap="Matriz de confusión del random forest", out.height="40%",fig.align = 'center'}
+start_time <- Sys.time()
+#print(start_time)
+forest_mod01 <- randomForest(RainTomorrow ~ ., 
+                        data = train, 
+                        importance = TRUE,
+                        proximity = TRUE,ntree=50)
+
+forest_mod01_pred = predict(forest_mod01, newdata=test)
+confusion_forest_mod01 = table(forest_mod01_pred, test$RainTomorrow)
+
+
+acc_forest_mod01 <- sum(diag(confusion_forest_mod01))/sum(confusion_forest_mod01)
+
+end_time <- Sys.time()
+#print(end_time - start_time)
+```
+
+```{r}
+acc_forest_mod01
+acc_knn_mod01
+acc_log
+acc_svm_linmod01
+acc_svm_polymod01
+acc_svm_sigmod01
+acc_tree_mod01
+```
+

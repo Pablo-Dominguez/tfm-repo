@@ -1,7 +1,7 @@
 ---
 title: "Análisis y modelado de datos"
 author: "Pablo Domínguez"
-date: '2022-06-23'
+date: '2022-07-08'
 output:
   pdf_document:
     number_sections: no
@@ -27,6 +27,15 @@ header-includes:
 - \usepackage{makecell}
 - \usepackage{xcolor}
 - \usepackage[spanish,es-tabla]{babel}
+- \usepackage{pdfpages}
+- \usepackage{titling}
+  \pretitle{\begin{center}
+    \includepdf{cover.pdf}}
+  \posttitle{\end{center}}
+
+
+
+
 ---
 
 ```{r message=FALSE, echo=FALSE}
@@ -46,12 +55,19 @@ library(viridis)
 library(tidyquant)
 ```
 
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
 \listoftables
 \listoffigures
 
 ## Planteamiento del problema a abordar
 
-Nos encontramos con un conjunto de datos obtenidos a partir de mediciones meteorológicas realizadas por el gobierno de Australia^[Notes about Daily Weather Observations - @NADWO]. Estos datos, recogidos en distintas localidades, se han capturado realizando mediciones diarias de temperatura, lluvia, evaporación, sol, viento, humedad etc. 
+En el mundo actual existe la necesidad de diversificar y divulgar el conocimiento sobre la ciencia del dato. Es por este motivo por el que entidades como Kaggle se encargan de recopilar bases de datos y proponer problemas relativos a los mismos, con vistas de motivar la resolución de problemas de *aprendizaje automático* cada vez más complicados.
+
+Entre estos, nos encontramos con un conjunto de datos obtenidos a partir de mediciones meteorológicas realizadas por el gobierno de Australia^[Notes about Daily Weather Observations - @NADWO]. Estos datos, recogidos en distintas localidades, se han capturado realizando mediciones diarias de temperatura, lluvia, evaporación, sol, viento, humedad etc. 
 
 En la referencia mencionada advierten que el control de calidad aplicado a la captura de estos datos ha sido limitado, por lo que es posible que existan imprecisiones debidas a datos faltantes, valores acumulados tras varios datos faltantes o errores de varios tipos. Es por este motivo que empezaremos nuestro estudio realizando una revisión de la calidad y estructura del dato. Tras este proceso, construiremos una serie de variables que transformarán el problema y la estructura de datos para que puedan aplicarse los modelos de clasificación supervisada planteados.
 
@@ -283,7 +299,7 @@ dates_df %>% slice(., 1:12) %>% kbl(., booktabs = T, caption = "Muestra de serie
 
 ```
 
-## Agrupación por zona climática
+## Agrupación por zona climática {#ag-zona-climat}
  
 Con el objetivo de modelar con mayor precisión los datos, vamos a realizar una segmentación de la información asignando la zona climática\footnote{\label{climate01}Desarolladas en el National Construction Code por el Buró de Metereología del Gobierno de Australia.} a la que pertenece cada localización. Estas zonas, representadas en la figura \ref{fig:Fig-01}, están descritas de la siguiente manera.
 
@@ -850,7 +866,7 @@ get_ts <- function(){
       
       # ts variables
       ts_cols <- db_filtered %>% colnames() %>% setdiff(.,c("Date","RainToday","RainTomorrow","Location"))
-      print(paste0("All good for",as.character(i), "before plotting"))
+      #print(paste0("All good for",as.character(i), "before plotting"))
       for(colu in ts_cols){
         # New plot
         p <- ggplot(db_filtered, aes(x = Date, y = colu)) + geom_line(aes(color = Location), size = 0.2) + theme(
@@ -1077,11 +1093,10 @@ for(city_index in which(colnames(zonas[[1]]) %in% locations)){
 
 ### Creación de variables ventana
 
-@Hallman1089425
+Siguiendo lo propuesto en @Hallman1089425, vamos a transformar la variable *Date* en una serie de variables temporales tipo ventana. La idea subyacente a esta técnica es que si para cada variable de un conjunto de datos añadimos columnas con información relativa al pasado, entonces podemos prescindir de la variable del tiempo ya que esta queda representada por un subconjunto de las variables ventana. 
 
-Creación de nuevas variables ventana para trend y seasonality
+De esta manera, para cada variable del conjunto de datos hemos creado otra variable conteniendo el promedio de los últimos cinco días. A esta técnica se la conoce como *rolling windows*, y facilita que podamos tratar una serie temporal como un conjunto de datos estático en el tiempo.
 
-Crear ventanas para RainToday de estadísticos rolling patrá
 
 ```{r,echo=FALSE, message=FALSE}
 
@@ -1140,12 +1155,9 @@ last_dbs[[1]][,sample_cols] %>% head() %>% kbl(., booktabs = T,caption = "Muestr
 
 Como paso final del procesamiento de datos previo a la etapa de modelado, nos disponemos a realizar una selección de variables. El objetivo de dicho procedimiento es reducir la dimensionalidad de los conjuntos de datos con los que estamos trabajando al tiempo que se intenta condensar la información que aportan las variables explicativas en un subconjunto de las mismas.
 
-Con esta idea en mente, para cada zona vamos a realizar una selección de variables siguiendo el algoritmo *step* descrito en @MASS. Este algoritmo realiza una regresión lineal sencilla, añadiendo variables al modelo al tiempo que calculando el aporte de cada variable sobre la predicción siguiendo el *criterio de información de Akaike*. Con esto, en cada iteración se añaden o eliminan variables hasta que obtenemos una selección de las variables más relevantes para la predicción.
+Con esta idea en mente, para cada zona vamos a realizar una selección de variables siguiendo el algoritmo *step* descrito en @MASS. Este algoritmo realiza una regresión sencilla, añadiendo variables a un modelo al tiempo que calcula el aporte de cada variable sobre la predicción siguiendo el *criterio de información de Akaike*. Con esto, en cada iteración se añaden o eliminan variables hasta que se obtiene una selección de las variables más relevantes para la predicción.
 
 
-As presented in^[An Introduction to Variable and Feature Selection - @AITFS], hemos seguido los pasos que proponen a la hora de trabajar, es decir:
-
- - Cosas de la lista
  
 ```{r step, echo=FALSE,message=FALSE,results='hide'}
 
@@ -1176,12 +1188,12 @@ db_vars["Imp. vars"] <- db_vars %>% mutate_at(.,"Imp. vars",function(x){ paste(c
 
 
 
-db_vars %>% kable(., booktabs = T,caption = "15 variables más importantes para cada zona según el AIC.",escape = FALSE) %>% kable_styling(latex_options = c("striped","hold_position","scale_down")) %>% row_spec(0,align = 'c')
+#db_vars[,-c(2)] %>% kable(., booktabs = T,caption = "15 variables más importantes para cada zona según el AIC.",escape = FALSE) %>% kable_styling(latex_options = c("striped","hold_position","scale_down")) %>% row_spec(0,align = 'c')
 
 ```
 
 
-```{r echo=FALSE}
+```{r echo=FALSE,,results='hide',message=FALSE}
 # Seleccionamos las columnas para cada variable
 # 
 for(i in 1:length(last_dbs)){
