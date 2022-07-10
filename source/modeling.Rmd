@@ -3,4 +3,214 @@
 
 ## Modelado
 
+
+```{r message=FALSE, echo=FALSE}
+library(tidyverse)
+library(kableExtra)
+library(ggpubr)
+library(randomForest)
+library(mlbench)
+library(caret)
+library(FactoMineR)
+library(factoextra)
+library(mltools)
+library(data.table)
+library(rpart)
+library(rpart.plot)
+library(class)
+library(cowplot)
+library(RColorBrewer)
+library(viridis)
+library(tidyquant)
+library (e1071)
+library(tree)
+library(cvms)
+```
+
+```{r echo=FALSE}
+# Importamos los datos para el modelado
+# 
+main_data <- read.csv(file="../db/processed_dbs/data_zona7.csv")
+main_data["RainTomorrow"] <- as.factor(main_data$RainTomorrow)
+attach(main_data)
+```
+
+
 ### Train-test split
+
+```{r split, echo=FALSE}
+
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(main_data))
+
+#
+#set.seed(123)
+train_ind <- sample(seq_len(nrow(main_data)), size = smp_size)
+
+train <- main_data[train_ind, ]
+test <- main_data[-train_ind, ]
+
+train$RainTomorrow %>% table()
+test$RainTomorrow %>% table()
+
+```
+
+#### Logistic regression zona 7
+
+```{r Log-reg, echo=FALSE}
+
+
+log.model <- glm(RainTomorrow ~., data = train, family = binomial(link = "logit"))
+summary(log.model)
+
+log.predictions <- predict(log.model, test, type="response")
+log.prediction.rd <- ifelse(log.predictions > 0.5, 1, 0)
+n_rt <- which(colnames(test) %in% c("RainTomorrow"))
+
+
+```
+
+```{r, echo=FALSE}
+
+conf_matrix <- table(log.prediction.rd, test[,n_rt])
+
+acc <- sum(diag(conf_matrix))/sum(conf_matrix)
+#0.82
+```
+
+#### SVM zona 7
+
+
+```{r kernel lineal}
+start_time <- Sys.time()
+print(start_time)
+
+svm_linmod01 <- tune(svm ,RainTomorrow ~ ., data = train, kernel = "linear",
+                       ranges =list(cost=2**seq(from=-2, to=5)),
+                       tunecontrol = tune.control(cross=5))
+saveRDS(svm_linmod01,"../models/initial_models/svm_linmod01.Rds")
+svm_linmod01 <- readRDS("../models/initial_models/svm_linmod01.Rds")
+print("Modelado inicial con kernel lineal")
+end_time <- Sys.time()
+print(end_time - start_time)
+
+```
+
+```{r evaluación kernel lineal}
+confusion_svm_linmod01 = confusion_matrix(targets = test[,"RainTomorrow"], 
+                                   predictions = predict(svm_linmod01$best.model,test),
+                                   metrics = list("Accuracy" = TRUE))
+p <- plot_confusion_matrix(confusion_svm_linmod01$`Confusion Matrix`[[1]], palette = "Greens") + ggtitle("Plot of svm_linmod01")+theme(plot.title = element_text(size = 12))
+
+confusion_svm_linmod01$`Accuracy`[[1]]
+
+```
+
+
+```{r kernel polinomial}
+start_time <- Sys.time()
+print(start_time)
+svm_polymod01 <- tune(svm ,RainTomorrow ~ ., data = train, kernel = "polynomial",
+                       ranges =list(cost=2**seq(from=-2, to=5)),
+                       degree = 3,
+                       tunecontrol = tune.control(cross=5))
+saveRDS(svm_polymod01,"../models/initial_models/svm_polymod01.Rds")
+svm_polymod01 <- readRDS("../models/initial_models/svm_polymod01.Rds")
+print("Modelado inicial con kernel polinomial")
+end_time <- Sys.time()
+print(end_time - start_time)
+
+```
+
+```{r evaluación kernel lineal}
+confusion_svm_polymod01 = confusion_matrix(targets = test[,"RainTomorrow"], 
+                                   predictions = predict(svm_polymod01$best.model,test),
+                                   metrics = list("Accuracy" = TRUE))
+p <- plot_confusion_matrix(confusion_svm_polymod01$`Confusion Matrix`[[1]], palette = "Greens") + ggtitle("Plot of svm_polymod01")+theme(plot.title = element_text(size = 12))
+
+confusion_svm_polymod01$`Accuracy`[[1]]
+
+```
+
+
+```{r kernel sigmoidal}
+start_time <- Sys.time()
+print(start_time)
+svm_sigmod01 <- tune(svm ,RainTomorrow ~ ., data = train, kernel = "sigmoid",
+                       ranges =list(cost=2**seq(from=-2, to=5)),
+                       tunecontrol = tune.control(cross=5))
+
+saveRDS(svm_sigmod01,"../models/initial_models/svm_sigmod01.Rds")
+svm_sigmod01 <- readRDS("../models/initial_models/svm_sigmod01.Rds")
+print("Modelado inicial con kernel polinomial")
+  
+
+end_time <- Sys.time()
+print(end_time - start_time)
+```
+
+
+```{r evaluación kernel sigmoidal}
+confusion_svm_sigmod01 = confusion_matrix(targets = test[,"RainTomorrow"], 
+                                   predictions = predict(svm_sigmod01$best.model,test),
+                                   metrics = list("Accuracy" = TRUE))
+p <- plot_confusion_matrix(confusion_svm_sigmod01$`Confusion Matrix`[[1]], palette = "Greens") + ggtitle("Plot of svm_sigmod01")+theme(plot.title = element_text(size = 12))
+
+confusion_svm_sigmod01$`Accuracy`[[1]]
+```
+
+#### KNN zona 7
+
+
+```{r}
+#set.seed(123)
+
+grid = expand.grid(k = c(seq(3,45,3))) 
+
+knn_mod01_cv = train(RainTomorrow ~., method= "knn",
+                    data = train,
+                    trControl = trainControl(method = 'cv',
+                                             number = 5,
+                                             search = "grid"),
+                     tuneGrid = grid)
+
+knn_mod01_cv$results
+#knn_mod01_cv$finalModel
+```
+
+
+```{r}
+n_rt <- which(colnames(train) %in% c("RainTomorrow"))
+knn_mod01 <- knn(train[,-c(n_rt)],test[,-c(n_rt)],cl=train$RainTomorrow,k=knn_mod01_cv$bestTune[[1]])
+confusion_knn_mod01 <- table(knn_mod01,test$RainTomorrow)
+
+acc <- sum(diag(confusion_knn_mod01))/sum(confusion_knn_mod01)
+```
+
+#### Decission trees zona 7
+
+
+```{r}
+tree_mod01 <- rpart(RainTomorrow ~., data = train,cp=0.1)
+confusion_tree_mod01 <- confusionMatrix(p, train$RainTomorrow, positive="1")
+acc <- sum(diag(confusion_tree_mod01$table))/sum(confusion_tree_mod01$table)
+```
+
+#### Random forest zona 7
+
+```{r}
+start_time <- Sys.time()
+print(start_time)
+forest_mod01 <- randomForest(RainTomorrow ~ ., 
+                        data = train, 
+                        importance = TRUE,
+                        proximity = TRUE,ntree=15)
+
+forest_mod01_pred = predict(forest_mod01, newdata=test)
+confusion_forest_mod01 = table(forest_mod01_pred, test$RainTomorrow)
+print((sum(diag(CM)))/sum(CM))
+
+end_time <- Sys.time()
+print(end_time - start_time)
+```
+

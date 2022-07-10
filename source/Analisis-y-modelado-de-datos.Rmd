@@ -1099,13 +1099,13 @@ for(i in 1:length(zonas)){
                       select     = columnas_numericas,
                       mutate_fun = rollapply, 
                       # rollapply args
-                      width      = 7,
+                      width      = 5,
                       align      = "right",
                       FUN        = mean,
                       # mean args
                       na.rm      = TRUE,
                       # tq_mutate args
-                      col_rename = paste0(columnas_numericas,"_mean7"))
+                      col_rename = paste0(columnas_numericas,"_mean5"))
     for(city in locations){
       if(which(colnames(zonas[[i]]) == city)==city_index){
         window_df[city] <- rep(1,1271)
@@ -1113,7 +1113,7 @@ for(i in 1:length(zonas)){
         window_df[city] <- rep(0,1271)
       }
     }
-    for(new_var in paste0(columnas_numericas,"_mean7")){
+    for(new_var in paste0(columnas_numericas,"_mean5")){
       new_var_mean <- window_df[[new_var]] %>% mean(.,na.rm=TRUE)
       window_df[new_var] <- replace_na(window_df[new_var],new_var_mean)
     }
@@ -1129,7 +1129,7 @@ for(i in 1:length(zonas)){
 
 ```{r Tab-12,echo=FALSE}
 
-sample_cols <- paste0(columnas_numericas,"_mean7") %>% sample(5)
+sample_cols <- paste0(columnas_numericas,"_mean5") %>% sample(5)
 
 last_dbs[[1]][,sample_cols] %>% head() %>% kbl(., booktabs = T,caption = "Muestra de algunas variables ventana de la zona 1") %>% kable_styling(latex_options = c("striped", "scale_down","hold_position"))
 
@@ -1138,10 +1138,9 @@ last_dbs[[1]][,sample_cols] %>% head() %>% kbl(., booktabs = T,caption = "Muestr
 
 ### Feature selection
 
+Como paso final del procesamiento de datos previo a la etapa de modelado, nos disponemos a realizar una selección de variables. El objetivo de dicho procedimiento es reducir la dimensionalidad de los conjuntos de datos con los que estamos trabajando al tiempo que se intenta condensar la información que aportan las variables explicativas en un subconjunto de las mismas.
 
-
-
-**Con las numéricas normalizamos y hacemos el step**
+Con esta idea en mente, para cada zona vamos a realizar una selección de variables siguiendo el algoritmo *step* descrito en @MASS. Este algoritmo realiza una regresión lineal sencilla, añadiendo variables al modelo al tiempo que calculando el aporte de cada variable sobre la predicción siguiendo el *criterio de información de Akaike*. Con esto, en cada iteración se añaden o eliminan variables hasta que obtenemos una selección de las variables más relevantes para la predicción.
 
 
 As presented in^[An Introduction to Variable and Feature Selection - @AITFS], hemos seguido los pasos que proponen a la hora de trabajar, es decir:
@@ -1155,7 +1154,7 @@ for(i in 1:length(last_dbs)){
   lm1 <- lm(RainTomorrow ~ ., data = last_dbs[[i]])
   #summary()
   slm1 <- step(lm1)
-  topnames <- names(slm1$coefficients)[2:16]
+  topnames <- c(names(slm1$coefficients)[2:16],"RainTomorrow")
   top_names_list[[paste0("zona",as.character(i))]] <- topnames
   # summary(slm1)
   # slm1$anova
@@ -1188,7 +1187,7 @@ db_vars %>% kable(., booktabs = T,caption = "15 variables más importantes para 
 for(i in 1:length(last_dbs)){
   last_dbs[[i]] <- last_dbs[[i]] %>% select(.,top_names_list[[i]])
   db_to_save <- as.data.frame(last_dbs[[i]])
-  save(db_to_save,file=paste0("../db/processed_dbs/data_zona",as.character(i),".Rda"))
+  write.csv(db_to_save,paste0("../db/processed_dbs/data_zona",as.character(i),".csv"),row.names = FALSE)
 }
 
 ```
